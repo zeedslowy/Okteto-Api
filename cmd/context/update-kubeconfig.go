@@ -19,7 +19,7 @@ import (
 	"github.com/okteto/okteto/cmd/utils"
 	"github.com/okteto/okteto/pkg/config"
 	"github.com/okteto/okteto/pkg/k8s/kubeconfig"
-	"github.com/okteto/okteto/pkg/log"
+	oktetoLog "github.com/okteto/okteto/pkg/log"
 	"github.com/okteto/okteto/pkg/okteto"
 	"github.com/spf13/cobra"
 )
@@ -30,7 +30,7 @@ func UpdateKubeconfigCMD() *cobra.Command {
 		Hidden: true,
 		Use:    "update-kubeconfig",
 		Args:   utils.NoArgsAccepted("https://okteto.com/docs/reference/cli/#update-kubeconfig"),
-		Short:  "Download kubectl credentials for the okteto context",
+		Short:  "Download credentials for the Kubernetes cluster selected via 'okteto context'",
 		RunE: func(cmd *cobra.Command, args []string) error {
 			ctx := context.Background()
 
@@ -57,6 +57,6 @@ func ExecuteUpdateKubeconfig(ctx context.Context) error {
 	if okteto.Context().IsOkteto {
 		k8sContext = okteto.UrlToKubernetesContext(k8sContext)
 	}
-	log.Success("Updated kubernetes context '%s/%s' in '%s'", k8sContext, okteto.Context().Namespace, config.GetKubeconfigPath())
+	oktetoLog.Success("Updated kubernetes context '%s/%s' in '%s'", k8sContext, okteto.Context().Namespace, config.GetKubeconfigPath())
 	return nil
 }
