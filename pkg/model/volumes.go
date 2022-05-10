@@ -22,6 +22,10 @@ import (
 	oktetoLog "github.com/okteto/okteto/pkg/log"
 )
 
+const (
+	DetachModePodName = "okteto-dev-env"
+)
+
 func (dev *Dev) translateDeprecatedVolumeFields() error {
 	if dev.Workdir == "" && len(dev.Sync.Folders) == 0 {
 		dev.Workdir = "/okteto"
@@ -303,4 +307,12 @@ func (dev *Dev) validateExternalVolumes() error {
 		}
 	}
 	return nil
+}
+
+func (dev *Dev) isDetached() bool {
+	return dev.Name == DetachModePodName
+}
+
+func (dev *Dev) ShouldHideVolume() bool {
+	return dev.isDetached()
 }

@@ -38,7 +38,6 @@ const (
 	//DefaultManifest default okteto manifest file
 	DefaultManifest   = "okteto.yml"
 	secondaryManifest = "okteto.yaml"
-	DetachModePodName = "okteto-dev-env"
 )
 
 func LoadManifestContext(devPath string) (*model.ContextResource, error) {
@@ -296,7 +295,7 @@ func GetDevDetachMode(manifest *model.Manifest, devs []string) (*model.Dev, erro
 			return nil, err
 		}
 	}
-	dev.Name = DetachModePodName
+	dev.Name = model.DetachModePodName
 	dev.Image = &model.BuildInfo{Name: "busybox"}
 	dev.Namespace = okteto.Context().Namespace
 	dev.Context = okteto.Context().Name

@@ -37,6 +37,11 @@ func translate(dev *model.Dev) *apiv1.PersistentVolumeClaim {
 			},
 		},
 	}
+	if dev.ShouldHideVolume() {
+		pvc.ObjectMeta.Annotations = map[string]string{
+			model.OktetoHideFromUIAnnotation: "true",
+		}
+	}
 	if dev.PersistentVolumeStorageClass() != "" {
 		storageClass := dev.PersistentVolumeStorageClass()
 		pvc.Spec.StorageClassName = &storageClass
