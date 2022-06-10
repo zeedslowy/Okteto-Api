@@ -344,7 +344,7 @@ func CheckIfRegularFile(path string) error {
 func GetDownCommand(devPath string) string {
 	okDownCommandHint := "okteto down -v"
 	if DefaultManifest != devPath && devPath != "" {
-		okDownCommandHint = fmt.Sprintf("okteto down -v -f %s", devPath)
+		okDownCommandHint = fmt.Sprintf("okteto down -v %s", devPath)
 	}
 	return okDownCommandHint
 }
