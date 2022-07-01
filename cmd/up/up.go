@@ -626,6 +626,7 @@ func (up *upContext) buildDevImage(ctx context.Context, app apps.App) error {
 		}
 	}
 
+	//test
 	if _, err := os.Stat(up.Dev.Image.GetDockerfilePath()); err != nil {
 		return oktetoErrors.UserError{
 			E:    fmt.Errorf("'--build' argument given but there is no Dockerfile"),
