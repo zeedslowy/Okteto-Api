@@ -4,11 +4,11 @@ go 1.17
 
 require (
 	github.com/Masterminds/semver/v3 v3.1.1
-	github.com/a8m/envsubst v1.2.0
+	github.com/a8m/envsubst v1.3.0
 	github.com/alessio/shellescape v1.4.1
-	github.com/briandowns/spinner v1.11.1
-	github.com/cheggaaa/pb/v3 v3.0.8
-	github.com/chzyer/readline v0.0.0-20180603132655-2972be24d48e
+	github.com/briandowns/spinner v1.19.0
+	github.com/cheggaaa/pb/v3 v3.1.0
+	github.com/chzyer/readline v1.5.1
 	github.com/compose-spec/godotenv v1.1.1
 	github.com/containerd/console v1.0.3
 	github.com/denisbrodbeck/machineid v1.0.1
@@ -17,23 +17,23 @@ require (
 	github.com/dsnet/compress v0.0.1 // indirect
 	github.com/dukex/mixpanel v0.0.0-20180925151559-f8d5594f958e
 	github.com/fatih/color v1.13.0
-	github.com/gliderlabs/ssh v0.3.3
+	github.com/gliderlabs/ssh v0.3.4
 	github.com/go-git/go-git/v5 v5.4.2
 	github.com/google/go-github v17.0.0+incompatible
 	github.com/google/uuid v1.3.0
 	github.com/hashicorp/go-getter v1.6.1
-	github.com/juju/ansiterm v0.0.0-20180109212912-720a0952cc2a
+	github.com/juju/ansiterm v1.0.0
 	github.com/kballard/go-shellquote v0.0.0-20180428030007-95032a82bc51
-	github.com/manifoldco/promptui v0.8.0
+	github.com/manifoldco/promptui v0.9.0
 	github.com/mholt/archiver v3.1.1+incompatible
 	github.com/mitchellh/go-ps v1.0.0
 	github.com/moby/term v0.0.0-20210619224110-3f7ff695adc6
 	github.com/pkg/errors v0.9.1
 	github.com/shirou/gopsutil v3.21.7+incompatible
-	github.com/shurcooL/graphql v0.0.0-20200928012149-18c5c3165e3a
+	github.com/shurcooL/graphql v0.0.0-20220606043923-3cf50f8a0a29
 	github.com/sirupsen/logrus v1.8.1
 	github.com/skratchdot/open-golang v0.0.0-20200116055534-eef842397966
-	github.com/spf13/cobra v1.3.0
+	github.com/spf13/cobra v1.5.0
 	github.com/src-d/enry/v2 v2.1.0
 	github.com/theupdateframework/notary v0.7.0 // indirect
 	github.com/vbauerster/mpb/v7 v7.1.5
@@ -68,11 +68,11 @@ require (
 	github.com/nwaples/rardecode v1.1.0 // indirect
 	github.com/opentracing/opentracing-go v1.2.0 // indirect
 	github.com/pierrec/lz4 v2.4.1+incompatible // indirect
-	github.com/stretchr/testify v1.7.0
+	github.com/stretchr/testify v1.8.0
 	github.com/tklauser/go-sysconf v0.3.9 // indirect
 	github.com/withfig/autocomplete-tools/packages/cobra v0.0.0-20211118163844-94616c903bcb
 	github.com/xi2/xz v0.0.0-20171230120015-48954b6210f8 // indirect
-	gopkg.in/yaml.v3 v3.0.0-20210107192922-496545a6307b
+	gopkg.in/yaml.v3 v3.0.1
 )
 
 require github.com/google/go-containerregistry v0.5.1
@@ -149,7 +149,7 @@ require (
 	github.com/kevinburke/ssh_config v0.0.0-20201106050909-4977a11b4351 // indirect
 	github.com/klauspost/compress v1.15.1 // indirect
 	github.com/liggitt/tabwriter v0.0.0-20181228230101-89fcab3d43de // indirect
-	github.com/lunixbochs/vtclean v0.0.0-20180621232353-2d01aacdc34a // indirect
+	github.com/lunixbochs/vtclean v1.0.0 // indirect
 	github.com/mailru/easyjson v0.7.6 // indirect
 	github.com/mattn/go-colorable v0.1.12 // indirect
 	github.com/mattn/go-isatty v0.0.14 // indirect
