@@ -105,16 +105,16 @@ func mergeServicesToDeployFromOptionsAndManifest(deployOptions *Options) {
 	}
 }
 
-func addEnvVars(ctx context.Context, cwd string) error {
-	if os.Getenv(model.OktetoGitBranchEnvVar) == "" {
+func (dc *DeployCommand) addEnvVars(ctx context.Context, cwd string) error {
+	if dc.envVar.get(model.OktetoGitBranchEnvVar) == "" {
 		branch, err := utils.GetBranch(ctx, cwd)
 		if err != nil {
 			oktetoLog.Infof("could not retrieve branch name: %s", err)
 		}
-		os.Setenv(model.OktetoGitBranchEnvVar, branch)
+		dc.envVar.set(model.OktetoGitBranchEnvVar, branch)
 	}
 
-	if os.Getenv(model.GithubRepositoryEnvVar) == "" {
+	if dc.envVar.get(model.GithubRepositoryEnvVar) == "" {
 		repo, err := model.GetRepositoryURL(cwd)
 		if err != nil {
 			oktetoLog.Infof("could not retrieve repo name: %s", err)
@@ -127,10 +127,10 @@ func addEnvVars(ctx context.Context, cwd string) error {
 			}
 			repo = repoHTTPS.String()
 		}
-		os.Setenv(model.GithubRepositoryEnvVar, repo)
+		dc.envVar.set(model.GithubRepositoryEnvVar, repo)
 	}
 
-	if os.Getenv(model.OktetoGitCommitEnvVar) == "" {
+	if dc.envVar.get(model.OktetoGitCommitEnvVar) == "" {
 		sha, err := utils.GetGitCommit(ctx, cwd)
 		if err != nil {
 			oktetoLog.Infof("could not retrieve sha: %s", err)
@@ -142,13 +142,13 @@ func addEnvVars(ctx context.Context, cwd string) error {
 		if !isClean {
 			sha = utils.GetRandomSHA(ctx, cwd)
 		}
-		os.Setenv(model.OktetoGitCommitEnvVar, sha)
+		dc.envVar.set(model.OktetoGitCommitEnvVar, sha)
 	}
-	if os.Getenv(model.OktetoRegistryURLEnvVar) == "" {
+	if dc.envVar.get(model.OktetoRegistryURLEnvVar) == "" {
 		os.Setenv(model.OktetoRegistryURLEnvVar, okteto.Context().Registry)
 	}
-	if os.Getenv(model.OktetoBuildkitHostURLEnvVar) == "" {
-		os.Setenv(model.OktetoBuildkitHostURLEnvVar, okteto.Context().Builder)
+	if dc.envVar.get(model.OktetoBuildkitHostURLEnvVar) == "" {
+		dc.envVar.set(model.OktetoBuildkitHostURLEnvVar, okteto.Context().Builder)
 	}
 	return nil
 }

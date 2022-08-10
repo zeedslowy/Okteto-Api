@@ -31,7 +31,6 @@ import (
 	"github.com/okteto/okteto/pkg/analytics"
 	"github.com/okteto/okteto/pkg/cmd/pipeline"
 	"github.com/okteto/okteto/pkg/cmd/stack"
-	"github.com/okteto/okteto/pkg/errors"
 	oktetoErrors "github.com/okteto/okteto/pkg/errors"
 	"github.com/okteto/okteto/pkg/k8s/diverts"
 	"github.com/okteto/okteto/pkg/k8s/ingresses"
@@ -51,6 +50,15 @@ const (
 )
 
 var tempKubeConfigTemplate = "%s/.okteto/kubeconfig-%s-%d"
+
+type environmentVariableHandler struct {
+	get func(key string) string
+	set func(key string, value string) error
+}
+
+// type workingDirectoryGetter interface {
+// 	Get() (dir string, err error)
+// }
 
 // Options options for deploy command
 type Options struct {
@@ -81,12 +89,15 @@ type Options struct {
 type DeployCommand struct {
 	GetManifest func(path string) (*model.Manifest, error)
 
-	Proxy              proxyInterface
-	Kubeconfig         kubeConfigHandler
-	Executor           executor.ManifestExecutor
-	TempKubeconfigFile string
-	K8sClientProvider  okteto.K8sClientProvider
-	Builder            *buildv2.OktetoBuilder
+	Proxy               proxyInterface
+	Kubeconfig          kubeConfigHandler
+	Executor            executor.ManifestExecutor
+	TempKubeconfigFile  string
+	K8sClientProvider   okteto.K8sClientProvider
+	Builder             *buildv2.OktetoBuilder
+	envVar              environmentVariableHandler
+	removeFile          func(name string) error
+	getWorkingDirectory func() (dir string, err error)
 
 	PipelineType model.Archetype
 }
@@ -189,6 +200,12 @@ func Deploy(ctx context.Context) *cobra.Command {
 				TempKubeconfigFile: GetTempKubeConfigFile(name),
 				K8sClientProvider:  okteto.NewK8sClientProvider(),
 				Builder:            buildv2.NewBuilderFromScratch(),
+				envVar: environmentVariableHandler{
+					get: os.Getenv,
+					set: os.Setenv,
+				},
+				getWorkingDirectory: os.Getwd,
+				removeFile:          os.Remove,
 			}
 			startTime := time.Now()
 			err = c.RunDeploy(ctx, options)
@@ -239,7 +256,7 @@ func Deploy(ctx context.Context) *cobra.Command {
 
 // RunDeploy runs the deploy sequence
 func (dc *DeployCommand) RunDeploy(ctx context.Context, deployOptions *Options) error {
-	cwd, err := os.Getwd()
+	cwd, err := dc.getWorkingDirectory()
 	if err != nil {
 		return fmt.Errorf("failed to get the current working directory: %w", err)
 	}
@@ -249,7 +266,7 @@ func (dc *DeployCommand) RunDeploy(ctx context.Context, deployOptions *Options) 
 		return err
 	}
 
-	if err := addEnvVars(ctx, cwd); err != nil {
+	if err := dc.addEnvVars(ctx, cwd); err != nil {
 		return err
 	}
 	oktetoLog.Debugf("creating temporal kubeconfig file '%s'", dc.TempKubeconfigFile)
@@ -278,8 +295,8 @@ func (dc *DeployCommand) RunDeploy(ctx context.Context, deployOptions *Options) 
 	data := &pipeline.CfgData{
 		Name:       deployOptions.Name,
 		Namespace:  deployOptions.Manifest.Namespace,
-		Repository: os.Getenv(model.GithubRepositoryEnvVar),
-		Branch:     os.Getenv(model.OktetoGitBranchEnvVar),
+		Repository: dc.envVar.get(model.GithubRepositoryEnvVar),
+		Branch:     dc.envVar.get(model.OktetoGitBranchEnvVar),
 		Filename:   deployOptions.ManifestPathFlag,
 		Status:     pipeline.ProgressingStatus,
 		Manifest:   deployOptions.Manifest.Manifest,
@@ -294,7 +311,7 @@ func (dc *DeployCommand) RunDeploy(ctx context.Context, deployOptions *Options) 
 	// don't divert if current namespace is the diverted namespace
 	if deployOptions.Manifest.Deploy.Divert != nil {
 		if !okteto.IsOkteto() {
-			return errors.ErrDivertNotSupported
+			return oktetoErrors.ErrDivertNotSupported
 		}
 		if deployOptions.Manifest.Deploy.Divert.Namespace != deployOptions.Manifest.Namespace {
 			dc.Proxy.SetDivert(deployOptions.Manifest.Deploy.Divert.Namespace)
@@ -304,7 +321,7 @@ func (dc *DeployCommand) RunDeploy(ctx context.Context, deployOptions *Options) 
 
 	dc.PipelineType = deployOptions.Manifest.Type
 
-	os.Setenv(model.OktetoNameEnvVar, deployOptions.Name)
+	dc.envVar.set(model.OktetoNameEnvVar, deployOptions.Name)
 
 	if err := setDeployOptionsValuesFromManifest(ctx, deployOptions, cwd, c); err != nil {
 		return err
@@ -608,7 +625,7 @@ func (dc *DeployCommand) deployEndpoints(ctx context.Context, opts *Options) err
 
 func (dc *DeployCommand) cleanUp(ctx context.Context) {
 	oktetoLog.Debugf("removing temporal kubeconfig file '%s'", dc.TempKubeconfigFile)
-	if err := os.Remove(dc.TempKubeconfigFile); err != nil {
+	if err := dc.removeFile(dc.TempKubeconfigFile); err != nil {
 		oktetoLog.Infof("could not remove temporal kubeconfig file: %s", err)
 	}
 
