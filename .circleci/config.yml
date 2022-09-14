@@ -55,7 +55,7 @@ executors:
       - image: okteto/golang-ci:1.18.0
   golang-windows:
     docker:
-      - image: golang/1.19-windowsservercore
+      - image: golang/golang:1.19-windowsservercore
 
 
 jobs:
