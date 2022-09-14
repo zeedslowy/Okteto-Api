@@ -53,6 +53,10 @@ executors:
   golang-ci:
     docker:
       - image: okteto/golang-ci:1.18.0
+  golang-windows:
+    docker:
+      - image: golang/1.19-windowsservercore
+
 
 jobs:
   build-binaries:
@@ -97,7 +101,7 @@ jobs:
           path: coverage.txt
           destination: coverage.txt
   run-windows-unit-test:
-    executor: win/default
+    executor: golang-windows
     environment:
       OKTETO_USER: cindylopez
     steps:
@@ -176,7 +180,7 @@ jobs:
             docker build -t okteto --build-arg VERSION_STRING=$CIRCLE_SHA1 .
 
   run-windows-e2e-test:
-    executor: win/default
+    executor: golang-windows
     environment:
       OKTETO_USER: cindylopez
     steps:
