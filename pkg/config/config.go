@@ -38,15 +38,19 @@ const (
 
 	oktetoFolderName = ".okteto"
 	//Activating up started
+	Building UpState = "building"
+	//Activating up started
+	Deploying UpState = "deploying"
+	//Activating up started
 	Activating UpState = "activating"
 	//Starting up started the dev pod creation
-	Starting = "starting"
+	Starting = "activating"
 	//Attaching up attaching volume
-	Attaching = "attaching"
+	Attaching = "activating"
 	//Pulling  up pulling images
-	Pulling = "pulling"
+	Pulling = "activating"
 	//Start ingSync up preparing syncthing
-	StartingSync = "startingSync"
+	StartingSync = "synchronizing"
 	//Synchronize ing up is syncthing
 	Synchronizing = "synchronizing"
 	//Ready up fi nished
@@ -128,6 +132,24 @@ func UpdateStateFile(dev *model.Dev, state UpState) error {
 	}
 
 	s := filepath.Join(GetAppHome(dev.Namespace, dev.Name), stateFile)
+	if err := os.WriteFile(s, []byte(state), 0644); err != nil {
+		return fmt.Errorf("failed to update state file: %s", err)
+	}
+
+	return nil
+}
+
+// UpdateStateFile updates the state file of a given dev environment
+func UpdateStateFileByName(name, namespace string, state UpState) error {
+	if namespace == "" {
+		return fmt.Errorf("can't update state file, namespace is empty")
+	}
+
+	if name == "" {
+		return fmt.Errorf("can't update state file, name is empty")
+	}
+
+	s := filepath.Join(GetAppHome(namespace, name), stateFile)
 	if err := os.WriteFile(s, []byte(state), 0644); err != nil {
 		return fmt.Errorf("failed to update state file: %s", err)
 	}

@@ -147,7 +147,7 @@ func LoadManifestWithContext(ctx context.Context, opts ManifestOptions) (*model.
 	ctxOptions := &ContextOptions{
 		Context:       ctxResource.Context,
 		Namespace:     ctxResource.Namespace,
-		Show:          true,
+		Show:          false,
 		DockerDesktop: os.Getenv(model.OktetoOriginEnvVar) == model.OktetoDockerDesktopOrigin,
 	}
 
@@ -209,7 +209,7 @@ func LoadStackWithContext(ctx context.Context, name, namespace string, stackPath
 	return s, nil
 }
 
-//LoadManifestV2WithContext initializes the okteto context taking into account command flags and manifest namespace/context fields
+// LoadManifestV2WithContext initializes the okteto context taking into account command flags and manifest namespace/context fields
 func LoadManifestV2WithContext(ctx context.Context, namespace, k8sContext, path string) error {
 	ctxOptions := &ContextOptions{
 		Namespace: namespace,

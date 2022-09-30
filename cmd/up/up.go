@@ -208,15 +208,29 @@ func Up() *cobra.Command {
 				return fmt.Errorf("failed to load okteto context '%s': %v", up.Dev.Context, err)
 			}
 
+			var dev *model.Dev
+			if upOptions.DockerDesktop {
+				dev, err = utils.GetDevDetachMode(oktetoManifest, upOptions.Devs)
+				if err != nil {
+					return err
+				}
+			} else {
+				dev, err = utils.GetDevFromManifest(oktetoManifest, upOptions.DevName)
+				if err != nil {
+					return err
+				}
+			}
+			up.Dev = dev
+
 			autocreateDev := true
 			if upOptions.Deploy || (up.Manifest.IsV2 && !pipeline.IsDeployed(ctx, up.Manifest.Name, up.Manifest.Namespace, up.Client)) {
 				if !upOptions.Deploy {
 					oktetoLog.Information("Deploying development environment '%s'...", up.Manifest.Name)
-					oktetoLog.Information("To redeploy your development environment manually run 'okteto deploy' or 'okteto up --deploy'")
 				}
 				startTime := time.Now()
-				err := up.deployApp(ctx)
+				err := up.deployApp(ctx, upOptions.Build)
 				if err != nil && oktetoErrors.ErrManifestFoundButNoDeployCommands != err {
+					config.UpdateStateFile(up.Dev, config.Failed)
 					return err
 				}
 				if oktetoErrors.ErrManifestFoundButNoDeployCommands != err && !upOptions.DockerDesktop {
@@ -237,22 +251,12 @@ func Up() *cobra.Command {
 
 			} else if !upOptions.Deploy && (up.Manifest.IsV2 && pipeline.IsDeployed(ctx, up.Manifest.Name, up.Manifest.Namespace, up.Client)) {
 				oktetoLog.Information("Development environment '%s' already deployed.", up.Manifest.Name)
-				oktetoLog.Information("To redeploy your development environment run 'okteto deploy' or 'okteto up [devName] --deploy'")
 			}
 
-			var dev *model.Dev
-			if upOptions.DockerDesktop {
-				dev, err = utils.GetDevDetachMode(oktetoManifest, upOptions.Devs)
-				if err != nil {
-					return err
-				}
-			} else {
-				dev, err = utils.GetDevFromManifest(oktetoManifest, upOptions.DevName)
-				if err != nil {
-					return err
-				}
+			if err := setBuildEnvVars(oktetoManifest, dev.Name); err != nil {
+				return err
 			}
-			up.Dev = dev
+
 			if !autocreateDev {
 				up.Dev.Autocreate = false
 			}
@@ -323,7 +327,7 @@ func Up() *cobra.Command {
 	cmd.Flags().StringArrayVarP(&upOptions.Envs, "env", "e", []string{}, "envs to add to the development container")
 	cmd.Flags().IntVarP(&upOptions.Remote, "remote", "r", 0, "configures remote execution on the specified port")
 	cmd.Flags().BoolVarP(&upOptions.Deploy, "deploy", "d", false, "Force execution of the commands in the 'deploy' section of the okteto manifest (defaults to 'false')")
-	cmd.Flags().BoolVarP(&upOptions.Build, "build", "", false, "build on-the-fly the dev image using the info provided by the 'build' okteto manifest field")
+	cmd.Flags().BoolVarP(&upOptions.Build, "build", "", false, "build images defined by the 'build' okteto manifest field")
 	cmd.Flags().MarkHidden("build")
 	cmd.Flags().BoolVarP(&upOptions.ForcePull, "pull", "", false, "force dev image pull")
 	cmd.Flags().MarkHidden("pull")
@@ -462,7 +466,7 @@ func getOverridedEnvVarsFromCmd(manifestEnvVars model.Environment, commandEnvVar
 	return &overridedEnvVars, nil
 }
 
-func (up *upContext) deployApp(ctx context.Context) error {
+func (up *upContext) deployApp(ctx context.Context, build bool) error {
 	kubeconfig := deploy.NewKubeConfig()
 	proxy, err := deploy.NewProxy(kubeconfig)
 	if err != nil {
@@ -483,7 +487,7 @@ func (up *upContext) deployApp(ctx context.Context) error {
 		Name:         up.Manifest.Name,
 		ManifestPath: up.Manifest.Filename,
 		Timeout:      5 * time.Minute,
-		Build:        false,
+		Build:        build,
 	})
 }
 

@@ -104,7 +104,7 @@ type DeployCommand struct {
 	PipelineType model.Archetype
 }
 
-//Deploy deploys the okteto manifest
+// Deploy deploys the okteto manifest
 func Deploy(ctx context.Context) *cobra.Command {
 	options := &Options{}
 
@@ -314,7 +314,9 @@ func (dc *DeployCommand) RunDeploy(ctx context.Context, deployOptions *Options) 
 			CommandArgs:  deployOptions.servicesToDeploy,
 		}
 		oktetoLog.Debug("force build from manifest definition")
+		config.UpdateStateFileByName(utils.DetachModePodName, deployOptions.Manifest.Namespace, config.Building)
 		if err := dc.Builder.Build(ctx, buildOptions); err != nil {
+			config.UpdateStateFileByName(utils.DetachModePodName, deployOptions.Manifest.Namespace, config.Failed)
 			return err
 		}
 	} else {
@@ -328,12 +330,15 @@ func (dc *DeployCommand) RunDeploy(ctx context.Context, deployOptions *Options) 
 				EnableStages: true,
 				Manifest:     deployOptions.Manifest,
 			}
+			config.UpdateStateFileByName(utils.DetachModePodName, deployOptions.Manifest.Namespace, config.Building)
 			if err := dc.Builder.Build(ctx, buildOptions); err != nil {
+				config.UpdateStateFileByName(utils.DetachModePodName, deployOptions.Manifest.Namespace, config.Failed)
 				return err
 			}
 		}
 	}
 
+	config.UpdateStateFileByName(utils.DetachModePodName, deployOptions.Manifest.Namespace, config.Deploying)
 	setDeployOptionsValuesFromManifest(ctx, deployOptions, cwd, c)
 	oktetoLog.Debugf("starting server on %d", dc.Proxy.GetPort())
 	dc.Proxy.Start()
@@ -642,7 +647,7 @@ func isSPDY(r *http.Request) bool {
 	return strings.HasPrefix(strings.ToLower(r.Header.Get(headerUpgrade)), "spdy/")
 }
 
-//GetTempKubeConfigFile returns a where the temp kubeConfigFile should be stored
+// GetTempKubeConfigFile returns a where the temp kubeConfigFile should be stored
 func GetTempKubeConfigFile(name string) string {
 	return fmt.Sprintf(tempKubeConfigTemplate, config.GetUserHomeDir(), name, time.Now().UnixMilli())
 }

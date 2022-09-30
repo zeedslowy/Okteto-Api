@@ -16,7 +16,6 @@ package up
 import (
 	"context"
 	"fmt"
-	"os"
 	"strings"
 	"time"
 
@@ -32,7 +31,6 @@ import (
 	oktetoLog "github.com/okteto/okteto/pkg/log"
 	"github.com/okteto/okteto/pkg/model"
 	"github.com/okteto/okteto/pkg/okteto"
-	"github.com/okteto/okteto/pkg/registry"
 	apiv1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
@@ -81,23 +79,6 @@ func (up *upContext) activate() error {
 
 	if err := apps.ValidateMountPaths(app.PodSpec(), up.Dev); err != nil {
 		return err
-	}
-
-	if _, err := registry.NewOktetoRegistry().GetImageTagWithDigest(up.Dev.Image.Name); err == oktetoErrors.ErrNotFound {
-		oktetoLog.Infof("image '%s' not found, building it: %s", up.Dev.Image.Name, err.Error())
-		if _, err := os.Stat(up.Dev.Image.Dockerfile); err != nil {
-			return oktetoErrors.UserError{
-				E:    fmt.Errorf("the image '%s' doesn't exist and can't be build", up.Dev.Image.Name),
-				Hint: "Please update your build section and try again",
-			}
-		}
-		up.Options.Build = true
-	}
-
-	if !up.isRetry && up.Options.Build {
-		if err := up.buildDevImage(ctx, app); err != nil {
-			return fmt.Errorf("error building dev image: %s", err)
-		}
 	}
 
 	go up.initializeSyncthing()

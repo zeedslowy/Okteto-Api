@@ -15,13 +15,13 @@ package cmd
 
 import (
 	"context"
+	"fmt"
 	"os"
 	"os/signal"
 	"time"
 
 	contextCMD "github.com/okteto/okteto/cmd/context"
 	"github.com/okteto/okteto/cmd/utils"
-	"github.com/okteto/okteto/pkg/analytics"
 	"github.com/okteto/okteto/pkg/cmd/status"
 	"github.com/okteto/okteto/pkg/config"
 	oktetoErrors "github.com/okteto/okteto/pkg/errors"
@@ -56,40 +56,17 @@ func Status() *cobra.Command {
 				return err
 			}
 
-			devName := ""
-			if len(args) == 1 {
-				devName = args[0]
-			}
-			dev, err := utils.GetDevFromManifest(manifest, devName)
+			dev, err := utils.GetDevDetachMode(manifest, []string{})
 			if err != nil {
 				return err
 			}
 
-			waitForStates := []config.UpState{config.Synchronizing, config.Ready}
-			if err := status.Wait(ctx, dev, waitForStates); err != nil {
+			status, err := config.GetState(dev)
+			if err != nil {
 				return err
 			}
-
-			sy, err := syncthing.Load(dev)
-			if err != nil {
-				oktetoLog.Infof("error accessing the syncthing info file: %s", err)
-				return oktetoErrors.ErrNotInDevMode
-			}
-			if showInfo {
-				oktetoLog.Information("Local syncthing url: http://%s", sy.GUIAddress)
-				oktetoLog.Information("Remote syncthing url: http://%s", sy.RemoteGUIAddress)
-				oktetoLog.Information("Syncthing username: okteto")
-				oktetoLog.Information("Syncthing password: %s", sy.GUIPassword)
-			}
-
-			if watch {
-				err = runWithWatch(ctx, sy)
-			} else {
-				err = runWithoutWatch(ctx, sy)
-			}
-
-			analytics.TrackStatus(err == nil, showInfo)
-			return err
+			fmt.Printf("{\"status\": \"%s\"}\n", status)
+			return nil
 		},
 	}
 	cmd.Flags().StringVarP(&devPath, "file", "f", utils.DefaultManifest, "path to the manifest file")
