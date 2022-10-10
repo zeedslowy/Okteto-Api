@@ -15,7 +15,7 @@ commands:
       steps:
         - run:
             name: Run all integration tests using circleci test split
-            command: integration-circleci-split
+            command: make integration-circleci-split
 
   v:
     steps:
