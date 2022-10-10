@@ -43,6 +43,11 @@ test:
 integration:
 	go test github.com/okteto/okteto/integration/... -tags="common integration actions" --count=1 -v -timeout 1h
 
+.PHONY: integration-circleci-split
+integration:
+	go test $(go list github.com/okteto/okteto/integration/... | circleci tests split --split-by=timings) -tags="integration" --count=1 -v -timeout 1h
+
+
 .PHONY: integration-actions
 integration-actions:
 	go test github.com/okteto/okteto/integration/actions -tags="actions" --count=1 -v -timeout 10m
