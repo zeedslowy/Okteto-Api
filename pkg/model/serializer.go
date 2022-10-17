@@ -1273,22 +1273,25 @@ func getKeyValue(unmarshal func(interface{}) error) (map[string]string, error) {
 
 // UnmarshalYAML Implements the Unmarshaler interface of the yaml pkg.
 func (envFiles *EnvFiles) UnmarshalYAML(unmarshal func(interface{}) error) error {
-	result := make(EnvFiles, 0)
-	var single string
+	return unmarshalYAMLSingleOrSlice(envFiles, unmarshal)
+}
+
+// Target is a type alias for []Single
+// MultiAlias is needed to prevent recursion
+func unmarshalYAMLSingleOrSlice[Single any, MultiAlias []Single, Target ~[]Single](target *Target, unmarshal func(interface{}) error) error {
+	var single Single
 	err := unmarshal(&single)
 	if err != nil {
-		var multi []string
+		var multi MultiAlias
 		err := unmarshal(&multi)
 		if err != nil {
 			return err
 		}
-		result = multi
-		*envFiles = result
+		*target = Target(multi)
 		return nil
 	}
 
-	result = append(result, single)
-	*envFiles = result
+	*target = Target{single}
 	return nil
 }
 
