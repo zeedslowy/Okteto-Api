@@ -26,13 +26,13 @@ import (
 
 	"github.com/manifoldco/promptui"
 	"github.com/okteto/okteto/pkg/config"
+	oktetoContext "github.com/okteto/okteto/pkg/context"
 	oktetoErrors "github.com/okteto/okteto/pkg/errors"
 	"github.com/okteto/okteto/pkg/filesystem"
 	"github.com/okteto/okteto/pkg/k8s/apps"
 	"github.com/okteto/okteto/pkg/k8s/deployments"
 	oktetoLog "github.com/okteto/okteto/pkg/log"
 	"github.com/okteto/okteto/pkg/model"
-	"github.com/okteto/okteto/pkg/okteto"
 	"k8s.io/client-go/kubernetes"
 )
 
@@ -85,11 +85,11 @@ func LoadManifest(devPath string) (*model.Manifest, error) {
 		manifest.Name = InferName(cwd)
 	}
 	if manifest.Namespace == "" {
-		manifest.Namespace = okteto.Context().Namespace
+		manifest.Namespace = oktetoContext.Context().Namespace
 	}
 
 	if manifest.Context == "" {
-		manifest.Context = okteto.Context().Name
+		manifest.Context = oktetoContext.Context().Name
 	}
 
 	for _, dev := range manifest.Dev {
@@ -97,8 +97,8 @@ func LoadManifest(devPath string) (*model.Manifest, error) {
 			return nil, err
 		}
 
-		dev.Namespace = okteto.Context().Namespace
-		dev.Context = okteto.Context().Name
+		dev.Namespace = oktetoContext.Context().Namespace
+		dev.Context = oktetoContext.Context().Name
 	}
 
 	return manifest, nil
@@ -141,8 +141,8 @@ func LoadManifestOrDefault(devPath, name string) (*model.Manifest, error) {
 		}
 		manifest.Dev[name] = model.NewDev()
 		manifest.Dev[name].Name = name
-		manifest.Dev[name].Namespace = okteto.Context().Namespace
-		manifest.Dev[name].Context = okteto.Context().Name
+		manifest.Dev[name].Namespace = oktetoContext.Context().Namespace
+		manifest.Dev[name].Context = oktetoContext.Context().Name
 		if err := manifest.Dev[name].SetDefaults(); err != nil {
 			return nil, err
 		}

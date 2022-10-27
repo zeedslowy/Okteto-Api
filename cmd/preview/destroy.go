@@ -17,6 +17,8 @@ import (
 	"context"
 	"fmt"
 
+	oktetoContext "github.com/okteto/okteto/pkg/context"
+
 	contextCMD "github.com/okteto/okteto/cmd/context"
 	"github.com/okteto/okteto/cmd/utils"
 	"github.com/okteto/okteto/pkg/analytics"
@@ -51,7 +53,7 @@ func Destroy(ctx context.Context) *cobra.Command {
 				return err
 			}
 
-			if !okteto.IsOkteto() {
+			if !oktetoContext.IsOkteto() {
 				return oktetoErrors.ErrContextIsNotOktetoCluster
 			}
 

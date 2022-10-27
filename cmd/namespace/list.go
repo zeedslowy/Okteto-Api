@@ -19,10 +19,11 @@ import (
 	"os"
 	"text/tabwriter"
 
+	oktetoContext "github.com/okteto/okteto/pkg/context"
+
 	contextCMD "github.com/okteto/okteto/cmd/context"
 	"github.com/okteto/okteto/cmd/utils"
 	oktetoErrors "github.com/okteto/okteto/pkg/errors"
-	"github.com/okteto/okteto/pkg/okteto"
 	"github.com/spf13/cobra"
 )
 
@@ -38,7 +39,7 @@ func List(ctx context.Context) *cobra.Command {
 				return err
 			}
 
-			if !okteto.IsOkteto() {
+			if !oktetoContext.IsOkteto() {
 				return oktetoErrors.ErrContextIsNotOktetoCluster
 			}
 
@@ -61,7 +62,7 @@ func (nc *NamespaceCommand) executeListNamespaces(ctx context.Context) error {
 	w := tabwriter.NewWriter(os.Stdout, 1, 1, 2, ' ', 0)
 	fmt.Fprintf(w, "Namespace\tStatus\n")
 	for _, space := range spaces {
-		if space.ID == okteto.Context().Namespace {
+		if space.ID == oktetoContext.Context().Namespace {
 			space.ID += " *"
 		}
 		fmt.Fprintf(w, "%s\t%v\n", space.ID, space.Status)

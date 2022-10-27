@@ -20,9 +20,9 @@ import (
 	"net/url"
 	"os"
 	"strings"
-	"sync"
 
 	"github.com/okteto/okteto/pkg/constants"
+	oktetoContext "github.com/okteto/okteto/pkg/context"
 	oktetoErrors "github.com/okteto/okteto/pkg/errors"
 	oktetoHttp "github.com/okteto/okteto/pkg/http"
 	oktetoLog "github.com/okteto/okteto/pkg/log"
@@ -44,7 +44,6 @@ type OktetoClient struct {
 type OktetoClientProvider struct{}
 
 var insecureSkipTLSVerify bool
-var strictTLSOnce sync.Once
 
 func NewOktetoClientProvider() *OktetoClientProvider {
 	return &OktetoClientProvider{}
@@ -60,11 +59,11 @@ func (*OktetoClientProvider) Provide() (types.OktetoInterface, error) {
 
 // NewOktetoClient creates a new client to connect with Okteto API
 func NewOktetoClient() (*OktetoClient, error) {
-	token := Context().Token
+	token := oktetoContext.Context().Token
 	if token == "" {
-		return nil, fmt.Errorf(oktetoErrors.ErrNotLogged, Context().Name)
+		return nil, fmt.Errorf(oktetoErrors.ErrNotLogged, oktetoContext.Context().Name)
 	}
-	u, err := parseOktetoURL(Context().Name)
+	u, err := parseOktetoURL(oktetoContext.Context().Name)
 	if err != nil {
 		return nil, err
 	}
@@ -78,7 +77,7 @@ func NewOktetoClient() (*OktetoClient, error) {
 
 	if insecureSkipTLSVerify {
 		ctxHttpClient = oktetoHttp.InsecureHTTPClient()
-	} else if cert, err := GetContextCertificate(); err == nil {
+	} else if cert, err := oktetoContext.GetContextCertificate(); err == nil {
 		ctxHttpClient = oktetoHttp.StrictSSLHTTPClient(cert)
 	}
 
@@ -105,7 +104,7 @@ func NewOktetoClientFromUrlAndToken(url, token string) (*OktetoClient, error) {
 
 	if insecureSkipTLSVerify {
 		ctxHttpClient = oktetoHttp.InsecureHTTPClient()
-	} else if cert, err := GetContextCertificate(); err == nil {
+	} else if cert, err := oktetoContext.GetContextCertificate(); err == nil {
 		ctxHttpClient = oktetoHttp.StrictSSLHTTPClient(cert)
 	}
 
@@ -127,7 +126,7 @@ func NewOktetoClientFromUrl(url string) (*OktetoClient, error) {
 
 	if insecureSkipTLSVerify {
 		ctxHttpClient = oktetoHttp.InsecureHTTPClient()
-	} else if cert, err := GetContextCertificate(); err == nil {
+	} else if cert, err := oktetoContext.GetContextCertificate(); err == nil {
 		ctxHttpClient = oktetoHttp.StrictSSLHTTPClient(cert)
 	}
 
@@ -181,7 +180,7 @@ func translateAPIErr(err error) error {
 	e := strings.TrimPrefix(err.Error(), "graphql: ")
 	switch e {
 	case "not-authorized":
-		return fmt.Errorf(oktetoErrors.ErrNotLogged, Context().Name)
+		return fmt.Errorf(oktetoErrors.ErrNotLogged, oktetoContext.Context().Name)
 	case "namespace-quota-exceeded":
 		return fmt.Errorf("you have exceeded your namespace quota. Contact us at hello@okteto.com to learn more")
 	case "namespace-quota-exceeded-onpremises":

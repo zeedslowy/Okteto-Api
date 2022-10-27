@@ -20,6 +20,8 @@ import (
 	"fmt"
 	"os"
 
+	oktetoContext "github.com/okteto/okteto/pkg/context"
+
 	"github.com/moby/buildkit/frontend/dockerfile/instructions"
 	"github.com/moby/buildkit/frontend/dockerfile/parser"
 	buildv1 "github.com/okteto/okteto/cmd/build/v1"
@@ -32,7 +34,6 @@ import (
 	oktetoErrors "github.com/okteto/okteto/pkg/errors"
 	oktetoLog "github.com/okteto/okteto/pkg/log"
 	"github.com/okteto/okteto/pkg/model"
-	"github.com/okteto/okteto/pkg/okteto"
 	"github.com/okteto/okteto/pkg/registry"
 	"github.com/okteto/okteto/pkg/types"
 	"github.com/spf13/cobra"
@@ -185,7 +186,7 @@ func (*Command) loadContext(ctx context.Context, options *types.BuildOptions) er
 		}
 	}
 
-	if okteto.IsOkteto() && ctxOpts.Namespace != "" {
+	if oktetoContext.IsOkteto() && ctxOpts.Namespace != "" {
 		create, err := utils.ShouldCreateNamespace(ctx, ctxOpts.Namespace)
 		if err != nil {
 			return err

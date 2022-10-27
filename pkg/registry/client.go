@@ -18,6 +18,7 @@ import (
 	"github.com/google/go-containerregistry/pkg/name"
 	v1 "github.com/google/go-containerregistry/pkg/v1"
 	"github.com/google/go-containerregistry/pkg/v1/remote"
+	oktetoContext "github.com/okteto/okteto/pkg/context"
 	oktetoHttp "github.com/okteto/okteto/pkg/http"
 	oktetoLog "github.com/okteto/okteto/pkg/log"
 	"github.com/okteto/okteto/pkg/okteto"
@@ -29,10 +30,10 @@ func clientOptions(ref name.Reference) []remote.Option {
 
 	var options []remote.Option
 
-	okRegistry := okteto.Context().Registry
+	okRegistry := oktetoContext.Context().Registry
 	if okRegistry == registry {
-		username := okteto.Context().UserID
-		password := okteto.Context().Token
+		username := oktetoContext.Context().UserID
+		password := oktetoContext.Context().Token
 
 		authenticator := &authn.Basic{
 			Username: username,
@@ -48,7 +49,7 @@ func clientOptions(ref name.Reference) []remote.Option {
 
 	if okteto.IsInsecureSkipTLSVerifyPolicy() {
 		transport = oktetoHttp.InsecureTransport()
-	} else if cert, err := okteto.GetContextCertificate(); err == nil {
+	} else if cert, err := oktetoContext.GetContextCertificate(); err == nil {
 		transport = oktetoHttp.StrictSSLTransport(cert)
 	}
 

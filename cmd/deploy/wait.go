@@ -21,11 +21,11 @@ import (
 	"time"
 
 	"github.com/okteto/okteto/pkg/cmd/pipeline"
+	oktetoContext "github.com/okteto/okteto/pkg/context"
 	oktetoErrors "github.com/okteto/okteto/pkg/errors"
 	"github.com/okteto/okteto/pkg/k8s/deployments"
 	"github.com/okteto/okteto/pkg/k8s/statefulsets"
 	oktetoLog "github.com/okteto/okteto/pkg/log"
-	"github.com/okteto/okteto/pkg/okteto"
 )
 
 func (dc *DeployCommand) wait(ctx context.Context, opts *Options) error {
@@ -56,7 +56,7 @@ func (dc *DeployCommand) wait(ctx context.Context, opts *Options) error {
 func (dc *DeployCommand) waitForResourcesToBeRunning(ctx context.Context, opts *Options) error {
 	ticker := time.NewTicker(5 * time.Second)
 	to := time.NewTicker(opts.Timeout)
-	c, _, err := dc.K8sClientProvider.Provide(okteto.Context().Cfg)
+	c, _, err := dc.K8sClientProvider.Provide(oktetoContext.Context().Cfg)
 	if err != nil {
 		return err
 	}

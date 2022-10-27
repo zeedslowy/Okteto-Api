@@ -22,6 +22,7 @@ import (
 	"strings"
 
 	"github.com/okteto/okteto/pkg/config"
+	oktetoContext "github.com/okteto/okteto/pkg/context"
 	oktetoLog "github.com/okteto/okteto/pkg/log"
 	"github.com/okteto/okteto/pkg/model"
 	"github.com/okteto/okteto/pkg/okteto"
@@ -68,12 +69,12 @@ func getTranslatedDockerFile(filename string) (string, error) {
 	datawriter := bufio.NewWriter(tmpFile)
 	defer datawriter.Flush()
 
-	userID := okteto.Context().UserID
+	userID := oktetoContext.Context().UserID
 	if userID == "" {
 		userID = "anonymous"
 	}
 
-	withCacheHandler := okteto.Context().Builder == okteto.CloudBuildKitURL
+	withCacheHandler := oktetoContext.Context().Builder == okteto.CloudBuildKitURL
 
 	for scanner.Scan() {
 		line := scanner.Text()
@@ -124,14 +125,14 @@ func translateCacheHandler(input, userID string) string {
 func translateOktetoRegistryImage(input string) string {
 
 	if strings.Contains(input, okteto.DevRegistry) {
-		tag := replaceRegistry(input, okteto.DevRegistry, okteto.Context().Namespace)
+		tag := replaceRegistry(input, okteto.DevRegistry, oktetoContext.Context().Namespace)
 		return tag
 	}
 
 	if strings.Contains(input, okteto.GlobalRegistry) {
 		globalNamespace := okteto.DefaultGlobalNamespace
-		if okteto.Context().GlobalNamespace != "" {
-			globalNamespace = okteto.Context().GlobalNamespace
+		if oktetoContext.Context().GlobalNamespace != "" {
+			globalNamespace = oktetoContext.Context().GlobalNamespace
 		}
 		tag := replaceRegistry(input, okteto.GlobalRegistry, globalNamespace)
 		return tag

@@ -31,9 +31,13 @@ import (
 	"github.com/okteto/okteto/pkg/filesystem"
 	oktetoLog "github.com/okteto/okteto/pkg/log"
 	"github.com/okteto/okteto/pkg/model/forward"
+
 	yaml "gopkg.in/yaml.v2"
 	yaml3 "gopkg.in/yaml.v3"
 )
+
+// import "github.com/okteto/okteto/pkg/okteto"
+// var x=	oktetoContext.IsOkteto()
 
 // Archetype represents the type of manifest
 type Archetype string
@@ -158,6 +162,7 @@ func NewManifestFromStack(stack *Stack) *Manifest {
 		oktetoLog.Fail("Can not convert stack to Manifestv2: %s", err)
 		return nil
 	}
+
 	return stackManifest
 }
 

@@ -22,6 +22,7 @@ import (
 	"github.com/okteto/okteto/internal/test"
 	"github.com/okteto/okteto/pkg/config"
 	"github.com/okteto/okteto/pkg/constants"
+	oktetoContext "github.com/okteto/okteto/pkg/context"
 	"github.com/okteto/okteto/pkg/okteto"
 )
 
@@ -66,7 +67,7 @@ func Test_initFromDeprecatedToken(t *testing.T) {
 			}
 			defer os.Remove(kubepath)
 			okteto.InitContextWithDeprecatedToken()
-			if okteto.ContextStore().CurrentContext == "" {
+			if oktetoContext.ContextStore().CurrentContext == "" {
 				t.Fatal("Not initialized")
 			}
 		})

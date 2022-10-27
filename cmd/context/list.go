@@ -21,7 +21,7 @@ import (
 	"text/tabwriter"
 
 	"github.com/okteto/okteto/cmd/utils"
-	"github.com/okteto/okteto/pkg/okteto"
+	oktetoContext "github.com/okteto/okteto/pkg/context"
 	"github.com/spf13/cobra"
 	"gopkg.in/yaml.v3"
 )
@@ -55,17 +55,17 @@ func executeListContext() error {
 		return fmt.Errorf("no contexts are available. Run 'okteto context' to configure your first okteto context")
 	}
 
-	ctxStore := okteto.ContextStore()
+	ctxStore := oktetoContext.ContextStore()
 
-	var ctxs []okteto.OktetoContextViewer
+	var ctxs []oktetoContext.OktetoContextViewer
 	for _, ctxSelector := range contexts {
 		okCtx, isOkteto := ctxStore.Contexts[ctxSelector.Name]
 
-		ctxViewer := okteto.OktetoContextViewer{
+		ctxViewer := oktetoContext.OktetoContextViewer{
 			Name:     ctxSelector.Name,
 			Builder:  "docker",
 			Registry: "-",
-			Current:  okteto.Context().Name == ctxSelector.Name,
+			Current:  oktetoContext.Context().Name == ctxSelector.Name,
 		}
 		if isOkteto {
 			ctxViewer.Registry = okCtx.Registry

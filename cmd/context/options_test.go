@@ -18,6 +18,7 @@ import (
 	"reflect"
 	"testing"
 
+	"github.com/okteto/okteto/pkg/constants"
 	"github.com/okteto/okteto/pkg/okteto"
 )
 
@@ -130,7 +131,7 @@ func Test_initFromEnvVars(t *testing.T) {
 			},
 			want: &ContextOptions{
 				Token:    "token",
-				Context:  okteto.CloudURL,
+				Context:  constants.CloudURL,
 				IsOkteto: true,
 			},
 		},
@@ -142,7 +143,7 @@ func Test_initFromEnvVars(t *testing.T) {
 			env: map[string]string{"OKTETO_TOKEN": "bad-token"},
 			want: &ContextOptions{
 				Token:    "token",
-				Context:  okteto.CloudURL,
+				Context:  constants.CloudURL,
 				IsOkteto: true,
 			},
 		},
@@ -152,7 +153,7 @@ func Test_initFromEnvVars(t *testing.T) {
 			env:  map[string]string{"OKTETO_TOKEN": "token"},
 			want: &ContextOptions{
 				Token:    "token",
-				Context:  okteto.CloudURL,
+				Context:  constants.CloudURL,
 				IsOkteto: true,
 			},
 		},

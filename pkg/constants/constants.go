@@ -40,4 +40,10 @@ const (
 
 	// OktetoFolderEnvVar defines the path of okteto folder
 	OktetoFolderEnvVar = "OKTETO_FOLDER"
+
+	// CloudURL is the default URL of okteto
+	CloudURL = "https://cloud.okteto.com"
+
+	// StagingURL is the default URL of okteto
+	StagingURL = "https://staging.okteto.dev"
 )

@@ -24,10 +24,11 @@ import (
 	buildv1 "github.com/okteto/okteto/cmd/build/v1"
 	"github.com/okteto/okteto/cmd/utils"
 	"github.com/okteto/okteto/pkg/cmd/build"
+	oktetoContext "github.com/okteto/okteto/pkg/context"
 	oktetoErrors "github.com/okteto/okteto/pkg/errors"
+
 	oktetoLog "github.com/okteto/okteto/pkg/log"
 	"github.com/okteto/okteto/pkg/model"
-	"github.com/okteto/okteto/pkg/okteto"
 	"github.com/okteto/okteto/pkg/registry"
 	"github.com/okteto/okteto/pkg/types"
 )
@@ -123,7 +124,7 @@ func (bc *OktetoBuilder) Build(ctx context.Context, options *types.BuildOptions)
 			}
 
 			buildSvcInfo := buildManifest[svcToBuild]
-			if !okteto.Context().IsOkteto && buildSvcInfo.Image == "" {
+			if !oktetoContext.Context().IsOkteto && buildSvcInfo.Image == "" {
 				return fmt.Errorf("'build.%s.image' is required if your cluster doesn't have Okteto installed", svcToBuild)
 			}
 
@@ -154,7 +155,7 @@ func (bc *OktetoBuilder) buildService(ctx context.Context, manifest *model.Manif
 	buildSvcInfo := manifest.Build[svcName]
 
 	switch {
-	case shouldAddVolumeMounts(buildSvcInfo) && !okteto.IsOkteto():
+	case shouldAddVolumeMounts(buildSvcInfo) && !oktetoContext.IsOkteto():
 		return "", oktetoErrors.UserError{
 			E:    fmt.Errorf("Build with volume mounts is not supported on vanilla clusters"),
 			Hint: "Please connect to a okteto cluster and try again",
@@ -169,7 +170,7 @@ func (bc *OktetoBuilder) buildService(ctx context.Context, manifest *model.Manif
 	case shouldBuildFromDockerfile(buildSvcInfo):
 		return bc.buildSvcFromDockerfile(ctx, manifest, svcName, options)
 	case shouldAddVolumeMounts(buildSvcInfo):
-		if okteto.IsOkteto() {
+		if oktetoContext.IsOkteto() {
 			return bc.addVolumeMounts(ctx, manifest, svcName, options)
 		}
 
@@ -238,7 +239,7 @@ func getBuildInfoWithoutVolumeMounts(buildInfo *model.BuildInfo, isStackManifest
 	if len(result.VolumesToInclude) > 0 {
 		result.VolumesToInclude = nil
 	}
-	if isStackManifest && okteto.IsOkteto() && !registry.IsOktetoRegistry(buildInfo.Image) {
+	if isStackManifest && oktetoContext.IsOkteto() && !registry.IsOktetoRegistry(buildInfo.Image) {
 		result.Image = ""
 	}
 	return result
@@ -246,7 +247,7 @@ func getBuildInfoWithoutVolumeMounts(buildInfo *model.BuildInfo, isStackManifest
 
 func getBuildInfoWithVolumeMounts(buildInfo *model.BuildInfo, isStackManifest bool) *model.BuildInfo {
 	result := buildInfo.Copy()
-	if isStackManifest && okteto.IsOkteto() {
+	if isStackManifest && oktetoContext.IsOkteto() {
 		result.Image = ""
 	}
 	result.VolumesToInclude = getAccessibleVolumeMounts(buildInfo)

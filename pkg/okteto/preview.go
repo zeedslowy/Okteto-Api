@@ -19,6 +19,7 @@ import (
 	"strings"
 
 	"github.com/okteto/okteto/pkg/config"
+	oktetoContext "github.com/okteto/okteto/pkg/context"
 	oktetoErrors "github.com/okteto/okteto/pkg/errors"
 	"github.com/okteto/okteto/pkg/types"
 	"github.com/shurcooL/graphql"
@@ -250,7 +251,7 @@ func (c *OktetoClient) GetPreviewEnvByName(ctx context.Context, name string) (*t
 	}
 
 	variables := map[string]interface{}{
-		"id": graphql.String(Context().Namespace),
+		"id": graphql.String(oktetoContext.Context().Namespace),
 	}
 	err := query(ctx, &queryStruct, variables, c.client)
 	if err != nil {

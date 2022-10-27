@@ -19,6 +19,7 @@ import (
 	"strconv"
 	"strings"
 
+	oktetoContext "github.com/okteto/okteto/pkg/context"
 	oktetoErrors "github.com/okteto/okteto/pkg/errors"
 	oktetoLog "github.com/okteto/okteto/pkg/log"
 	"github.com/okteto/okteto/pkg/model"
@@ -54,7 +55,7 @@ type ImageMetadata struct {
 func (*OktetoRegistry) GetImageTagWithDigest(imageTag string) (string, error) {
 	reference := imageTag
 
-	if okteto.IsOkteto() {
+	if oktetoContext.IsOkteto() {
 		reference = ExpandOktetoDevRegistry(reference)
 		reference = ExpandOktetoGlobalRegistry(reference)
 	}
@@ -78,15 +79,15 @@ func (*OktetoRegistry) GetImageTagWithDigest(imageTag string) (string, error) {
 // ExpandOktetoGlobalRegistry translates okteto.global
 func ExpandOktetoGlobalRegistry(tag string) string {
 	globalNamespace := okteto.DefaultGlobalNamespace
-	if okteto.Context().GlobalNamespace != "" {
-		globalNamespace = okteto.Context().GlobalNamespace
+	if oktetoContext.Context().GlobalNamespace != "" {
+		globalNamespace = oktetoContext.Context().GlobalNamespace
 	}
 	return replaceRegistry(tag, okteto.GlobalRegistry, globalNamespace)
 }
 
 // ExpandOktetoDevRegistry translates okteto.dev
 func ExpandOktetoDevRegistry(tag string) string {
-	return replaceRegistry(tag, okteto.DevRegistry, okteto.Context().Namespace)
+	return replaceRegistry(tag, okteto.DevRegistry, oktetoContext.Context().Namespace)
 }
 
 // GetImageConfigFromImage gets information from the image
@@ -222,7 +223,7 @@ func IsDevRegistry(tag string) bool {
 
 // IsOktetoRegistry returns if an image tag is pointing to the okteto registry
 func IsOktetoRegistry(tag string) bool {
-	return IsDevRegistry(tag) || IsGlobalRegistry(tag) || (okteto.IsOkteto() && strings.HasPrefix(tag, okteto.Context().Registry))
+	return IsDevRegistry(tag) || IsGlobalRegistry(tag) || (oktetoContext.IsOkteto() && strings.HasPrefix(tag, oktetoContext.Context().Registry))
 }
 
 // replaceRegistry replaces the short registry url with the okteto registry url
@@ -230,7 +231,7 @@ func replaceRegistry(input, registryType, namespace string) string {
 	// Check if the registryType is the start of the sentence or has a whitespace before it
 	var re = regexp.MustCompile(fmt.Sprintf(`(^|\s)(%s)`, registryType))
 	if re.MatchString(input) {
-		return strings.Replace(input, registryType, fmt.Sprintf("%s/%s", okteto.Context().Registry, namespace), 1)
+		return strings.Replace(input, registryType, fmt.Sprintf("%s/%s", oktetoContext.Context().Registry, namespace), 1)
 	}
 	return input
 }

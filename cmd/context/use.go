@@ -21,6 +21,7 @@ import (
 
 	"github.com/okteto/okteto/cmd/utils"
 	"github.com/okteto/okteto/pkg/analytics"
+	oktetoContext "github.com/okteto/okteto/pkg/context"
 	oktetoErrors "github.com/okteto/okteto/pkg/errors"
 	"github.com/okteto/okteto/pkg/k8s/kubeconfig"
 	oktetoLog "github.com/okteto/okteto/pkg/log"
@@ -89,7 +90,7 @@ Or a Kubernetes context:
 }
 
 func (c *ContextCommand) Run(ctx context.Context, ctxOptions *ContextOptions) error {
-	ctxStore := okteto.ContextStore()
+	ctxStore := oktetoContext.ContextStore()
 	ctxOptions.initFromContext()
 	ctxOptions.initFromEnvVars()
 
@@ -111,12 +112,12 @@ func (c *ContextCommand) Run(ctx context.Context, ctxOptions *ContextOptions) er
 			return oktetoErrors.ErrCtxNotSet
 		}
 		oktetoLog.Infof("authenticating with interactive context")
-		oktetoContext, err := getContext(ctxOptions)
+		oktetoContextString, err := getContext(ctxOptions)
 		if err != nil {
 			return err
 		}
-		ctxOptions.Context = oktetoContext
-		ctxStore.CurrentContext = oktetoContext
+		ctxOptions.Context = oktetoContextString
+		ctxStore.CurrentContext = oktetoContextString
 		ctxOptions.Show = false
 		ctxOptions.Save = true
 	}
@@ -125,10 +126,10 @@ func (c *ContextCommand) Run(ctx context.Context, ctxOptions *ContextOptions) er
 		return err
 	}
 
-	os.Setenv(model.OktetoNamespaceEnvVar, okteto.Context().Namespace)
+	os.Setenv(model.OktetoNamespaceEnvVar, oktetoContext.Context().Namespace)
 
 	if ctxOptions.Show {
-		oktetoLog.Information("Using %s @ %s as context", okteto.Context().Namespace, okteto.RemoveSchema(okteto.Context().Name))
+		oktetoLog.Information("Using %s @ %s as context", oktetoContext.Context().Namespace, okteto.RemoveSchema(oktetoContext.Context().Name))
 	}
 
 	return nil
@@ -138,22 +139,22 @@ func getContext(ctxOptions *ContextOptions) (string, error) {
 	ctxs := getContextsSelection(ctxOptions)
 	initialPosition := getInitialPosition(ctxs)
 	selector := utils.NewOktetoSelector("A context defines the default cluster/namespace for any Okteto CLI command.\nSelect the context you want to use:", "Context")
-	oktetoContext, err := selector.AskForOptionsOkteto(ctxs, initialPosition)
+	oktetoContextString, err := selector.AskForOptionsOkteto(ctxs, initialPosition)
 	if err != nil {
 		return "", err
 	}
 
-	if isCreateNewContextOption(oktetoContext) {
-		oktetoContext, err = askForOktetoURL()
+	if isCreateNewContextOption(oktetoContextString) {
+		oktetoContextString, err = askForOktetoURL()
 		if err != nil {
 			return "", err
 		}
 		ctxOptions.IsOkteto = true
 	} else {
-		ctxOptions.IsOkteto = okteto.IsOktetoContext(oktetoContext)
+		ctxOptions.IsOkteto = oktetoContext.IsOktetoContext(oktetoContextString)
 	}
 
-	return oktetoContext, nil
+	return oktetoContextString, nil
 }
 
 func setSecrets(secrets []types.Secret) {

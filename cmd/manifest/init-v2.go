@@ -22,6 +22,8 @@ import (
 	"strings"
 	"time"
 
+	oktetoContext "github.com/okteto/okteto/pkg/context"
+
 	buildv2 "github.com/okteto/okteto/cmd/build/v2"
 	contextCMD "github.com/okteto/okteto/cmd/context"
 	"github.com/okteto/okteto/cmd/deploy"
@@ -170,13 +172,13 @@ func (mc *ManifestCommand) RunInitV2(ctx context.Context, opts *InitOpts) (*mode
 		}
 		oktetoLog.Success("Okteto manifest (%s) deploy and build configured successfully", opts.DevPath)
 
-		c, _, err := mc.K8sClientProvider.Provide(okteto.Context().Cfg)
+		c, _, err := mc.K8sClientProvider.Provide(oktetoContext.Context().Cfg)
 		if err != nil {
 			return nil, err
 		}
 		namespace := manifest.Namespace
 		if namespace == "" {
-			namespace = okteto.Context().Namespace
+			namespace = oktetoContext.Context().Namespace
 		}
 		isDeployed := pipeline.IsDeployed(ctx, manifest.Name, namespace, c)
 		deployAnswer := false
@@ -420,8 +422,8 @@ func createFromCompose(composePath string) (*model.Manifest, error) {
 	if err != nil {
 		return nil, err
 	}
-	manifest.Context = okteto.Context().Name
-	manifest.Namespace = okteto.Context().Namespace
+	manifest.Context = oktetoContext.Context().Name
+	manifest.Namespace = oktetoContext.Context().Namespace
 
 	for _, build := range manifest.Build {
 		context, err := filepath.Abs(build.Context)
@@ -484,7 +486,7 @@ func inferBuildSectionFromDockerfiles(cwd string, dockerfiles []string) (model.M
 				Dockerfile: dockerfile,
 			}
 		}
-		if !okteto.IsOkteto() {
+		if !oktetoContext.IsOkteto() {
 			imageName, err := utils.AsksQuestion(fmt.Sprintf("Which is the image name for %s: ", dockerfile))
 			if err != nil {
 				return nil, err

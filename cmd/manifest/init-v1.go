@@ -20,6 +20,8 @@ import (
 	"path/filepath"
 	"strings"
 
+	oktetoContext "github.com/okteto/okteto/pkg/context"
+
 	contextCMD "github.com/okteto/okteto/cmd/context"
 	"github.com/okteto/okteto/cmd/utils"
 	"github.com/okteto/okteto/pkg/analytics"
@@ -208,7 +210,7 @@ func getRunningApp(ctx context.Context) (apps.App, string, error) {
 }
 
 func supportsPersistentVolumes(ctx context.Context) bool {
-	if okteto.IsOkteto() {
+	if oktetoContext.IsOkteto() {
 		return true
 	}
 	c, _, err := okteto.GetK8sClient()
@@ -263,7 +265,7 @@ func askForLanguage() (string, error) {
 }
 
 func askForRunningApp(ctx context.Context, c kubernetes.Interface) (apps.App, error) {
-	namespace := okteto.Context().Namespace
+	namespace := oktetoContext.Context().Namespace
 	dList, err := deployments.List(ctx, namespace, "", c)
 	if err != nil {
 		oktetoLog.Yellow("Failed to list deployments: %s", err)

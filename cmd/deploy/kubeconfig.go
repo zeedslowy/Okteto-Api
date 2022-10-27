@@ -19,8 +19,8 @@ import (
 	"time"
 
 	"github.com/okteto/okteto/pkg/config"
+	oktetoContext "github.com/okteto/okteto/pkg/context"
 	oktetoLog "github.com/okteto/okteto/pkg/log"
-	"github.com/okteto/okteto/pkg/okteto"
 	"k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/clientcmd"
 	clientcmdapi "k8s.io/client-go/tools/clientcmd/api"
@@ -80,11 +80,11 @@ func (k *KubeConfig) Modify(port int, sessionToken, destKubeconfigFile string) e
 }
 
 func (*KubeConfig) GetCMDAPIConfig() (*clientcmdapi.Config, error) {
-	if okteto.Context().Cfg == nil {
+	if oktetoContext.Context().Cfg == nil {
 		return nil, fmt.Errorf("okteto context not initialized")
 	}
 
-	return okteto.Context().Cfg, nil
+	return oktetoContext.Context().Cfg, nil
 }
 
 // GetTempKubeConfigFile returns where the temp kubeConfigFile for deploy should be stored

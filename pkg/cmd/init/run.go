@@ -21,6 +21,7 @@ import (
 	"path/filepath"
 	"strings"
 
+	oktetoContext "github.com/okteto/okteto/pkg/context"
 	oktetoErrors "github.com/okteto/okteto/pkg/errors"
 	"github.com/okteto/okteto/pkg/k8s/apps"
 	"github.com/okteto/okteto/pkg/k8s/pods"
@@ -114,7 +115,7 @@ func SetDevDefaultsFromApp(ctx context.Context, dev *model.Dev, app apps.App, co
 
 	}
 
-	if !okteto.IsOkteto() {
+	if !oktetoContext.IsOkteto() {
 		setResourcesFromPod(dev, pod, container)
 	}
 

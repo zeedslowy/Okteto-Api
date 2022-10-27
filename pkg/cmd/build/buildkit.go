@@ -29,8 +29,9 @@ import (
 	"github.com/moby/buildkit/session/auth/authprovider"
 	"github.com/moby/buildkit/util/progress/progressui"
 	"github.com/okteto/okteto/pkg/config"
+	oktetoContext "github.com/okteto/okteto/pkg/context"
 	oktetoLog "github.com/okteto/okteto/pkg/log"
-	"github.com/okteto/okteto/pkg/okteto"
+
 	"github.com/okteto/okteto/pkg/types"
 	"github.com/pkg/errors"
 	"golang.org/x/oauth2"
@@ -84,8 +85,8 @@ func getSolveOpt(buildOptions *types.BuildOptions) (*client.SolveOpt, error) {
 		frontendAttrs["build-arg:"+kv[0]] = kv[1]
 	}
 	attachable := []session.Attachable{}
-	if okteto.IsOkteto() {
-		attachable = append(attachable, newDockerAndOktetoAuthProvider(okteto.Context().Registry, okteto.Context().UserID, okteto.Context().Token, os.Stderr))
+	if oktetoContext.IsOkteto() {
+		attachable = append(attachable, newDockerAndOktetoAuthProvider(oktetoContext.Context().Registry, oktetoContext.Context().UserID, oktetoContext.Context().Token, os.Stderr))
 	} else {
 		attachable = append(attachable, authprovider.NewDockerAuthProvider(os.Stderr))
 	}
@@ -147,17 +148,17 @@ func getSolveOpt(buildOptions *types.BuildOptions) (*client.SolveOpt, error) {
 }
 
 func getBuildkitClient(ctx context.Context) (*client.Client, error) {
-	buildkitHost := okteto.Context().Builder
-	octxStore := okteto.ContextStore()
+	buildkitHost := oktetoContext.Context().Builder
+	octxStore := oktetoContext.ContextStore()
 	for _, octx := range octxStore.Contexts {
 		// if a context configures buildkit with an Okteto Cluster
 		if octx.IsOkteto && octx.Builder == buildkitHost {
-			okteto.Context().Token = octx.Token
-			okteto.Context().Certificate = octx.Certificate
+			oktetoContext.Context().Token = octx.Token
+			oktetoContext.Context().Certificate = octx.Certificate
 		}
 	}
-	if okteto.Context().Certificate != "" {
-		certBytes, err := base64.StdEncoding.DecodeString(okteto.Context().Certificate)
+	if oktetoContext.Context().Certificate != "" {
+		certBytes, err := base64.StdEncoding.DecodeString(oktetoContext.Context().Certificate)
 		if err != nil {
 			return nil, fmt.Errorf("certificate decoding error: %w", err)
 		}
@@ -175,28 +176,28 @@ func getBuildkitClient(ctx context.Context) (*client.Client, error) {
 		return c, nil
 	}
 
-	c, err := client.New(ctx, okteto.Context().Builder, client.WithFailFast())
+	c, err := client.New(ctx, oktetoContext.Context().Builder, client.WithFailFast())
 	if err != nil {
-		return nil, errors.Wrapf(err, "failed to create the builder client for %s", okteto.Context().Builder)
+		return nil, errors.Wrapf(err, "failed to create the builder client for %s", oktetoContext.Context().Builder)
 	}
 	return c, nil
 }
 
 func getClientForOktetoCluster(ctx context.Context) (*client.Client, error) {
 
-	b, err := url.Parse(okteto.Context().Builder)
+	b, err := url.Parse(oktetoContext.Context().Builder)
 	if err != nil {
-		return nil, errors.Wrapf(err, "invalid buildkit host %s", okteto.Context().Builder)
+		return nil, errors.Wrapf(err, "invalid buildkit host %s", oktetoContext.Context().Builder)
 	}
 
 	creds := client.WithCredentials(b.Hostname(), config.GetCertificatePath(), "", "")
 
 	oauthToken := &oauth2.Token{
-		AccessToken: okteto.Context().Token,
+		AccessToken: oktetoContext.Context().Token,
 	}
 
 	rpc := client.WithRPCCreds(oauth.NewOauthAccess(oauthToken))
-	c, err := client.New(ctx, okteto.Context().Builder, client.WithFailFast(), creds, rpc)
+	c, err := client.New(ctx, oktetoContext.Context().Builder, client.WithFailFast(), creds, rpc)
 	if err != nil {
 		return nil, err
 	}

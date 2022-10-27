@@ -23,13 +23,14 @@ import (
 	"sync"
 	"time"
 
+	oktetoContext "github.com/okteto/okteto/pkg/context"
+
 	contextCMD "github.com/okteto/okteto/cmd/context"
 	"github.com/okteto/okteto/cmd/pipeline"
 	"github.com/okteto/okteto/cmd/utils"
 	"github.com/okteto/okteto/pkg/analytics"
 	oktetoErrors "github.com/okteto/okteto/pkg/errors"
 	oktetoLog "github.com/okteto/okteto/pkg/log"
-	"github.com/okteto/okteto/pkg/okteto"
 	"github.com/okteto/okteto/pkg/types"
 	"github.com/spf13/cobra"
 )
@@ -75,7 +76,7 @@ func Deploy(ctx context.Context) *cobra.Command {
 				return err
 			}
 
-			if !okteto.IsOkteto() {
+			if !oktetoContext.IsOkteto() {
 				return oktetoErrors.ErrContextIsNotOktetoCluster
 			}
 

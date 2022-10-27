@@ -27,7 +27,7 @@ func Test_NoArgsAcceptedCtx(t *testing.T) {
 }
 
 func Test_NoArgsAcceptedShow(t *testing.T) {
-	cmd := Context()
+	cmd := oktetoContext.Context()
 	cmd.SetArgs([]string{"args"})
 	err := cmd.Execute()
 	if err == nil {

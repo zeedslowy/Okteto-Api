@@ -24,6 +24,8 @@ import (
 
 	"strings"
 
+	oktetoContext "github.com/okteto/okteto/pkg/context"
+
 	contextCMD "github.com/okteto/okteto/cmd/context"
 	pipelineCMD "github.com/okteto/okteto/cmd/pipeline"
 	"github.com/okteto/okteto/cmd/utils"
@@ -124,7 +126,7 @@ func Destroy(ctx context.Context) *cobra.Command {
 				options.ManifestPath = uptManifestPath
 			}
 			if err := contextCMD.LoadContextFromPath(ctx, options.Namespace, options.K8sContext, options.ManifestPath); err != nil {
-				if err.Error() == fmt.Errorf(oktetoErrors.ErrNotLogged, okteto.CloudURL).Error() {
+				if err.Error() == fmt.Errorf(oktetoErrors.ErrNotLogged, constants.CloudURL).Error() {
 					return err
 				}
 				if err := contextCMD.NewContextCommand().Run(ctx, &contextCMD.ContextOptions{Namespace: options.Namespace}); err != nil {
@@ -158,7 +160,7 @@ func Destroy(ctx context.Context) *cobra.Command {
 			}
 
 			if options.Namespace == "" {
-				options.Namespace = okteto.Context().Namespace
+				options.Namespace = oktetoContext.Context().Namespace
 			}
 
 			c := &destroyCommand{
@@ -172,7 +174,7 @@ func Destroy(ctx context.Context) *cobra.Command {
 			}
 
 			kubeconfigPath := getTempKubeConfigFile(name)
-			if err := kubeconfig.Write(okteto.Context().Cfg, kubeconfigPath); err != nil {
+			if err := kubeconfig.Write(oktetoContext.Context().Cfg, kubeconfigPath); err != nil {
 				return err
 			}
 			os.Setenv("KUBECONFIG", kubeconfigPath)
@@ -236,7 +238,7 @@ func (dc *destroyCommand) runDestroy(ctx context.Context, opts *Options) error {
 
 	namespace := opts.Namespace
 	if namespace == "" {
-		namespace = okteto.Context().Namespace
+		namespace = oktetoContext.Context().Namespace
 	}
 
 	oktetoLog.AddToBuffer(oktetoLog.InfoLevel, "Destroying...")
@@ -254,10 +256,10 @@ func (dc *destroyCommand) runDestroy(ctx context.Context, opts *Options) error {
 	}
 
 	if manifest.Context == "" {
-		manifest.Context = okteto.Context().Name
+		manifest.Context = oktetoContext.Context().Name
 	}
-	if manifest.Namespace == okteto.Context().Namespace {
-		manifest.Namespace = okteto.Context().Namespace
+	if manifest.Namespace == oktetoContext.Context().Namespace {
+		manifest.Namespace = oktetoContext.Context().Namespace
 	}
 	os.Setenv(constants.OktetoNameEnvVar, opts.Name)
 

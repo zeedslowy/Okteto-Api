@@ -18,6 +18,7 @@ import (
 	"strings"
 
 	"github.com/okteto/okteto/cmd/utils"
+	oktetoContext "github.com/okteto/okteto/pkg/context"
 	oktetoErrors "github.com/okteto/okteto/pkg/errors"
 	oktetoLog "github.com/okteto/okteto/pkg/log"
 	"github.com/okteto/okteto/pkg/okteto"
@@ -40,14 +41,14 @@ func DeleteCMD() *cobra.Command {
 }
 
 func Delete(okCtx string) error {
-	ctxStore := okteto.ContextStore()
+	ctxStore := oktetoContext.ContextStore()
 	if okCtx == ctxStore.CurrentContext {
 		ctxStore.CurrentContext = ""
 	}
 
 	if _, ok := ctxStore.Contexts[okCtx]; ok {
 		delete(ctxStore.Contexts, okCtx)
-		if err := okteto.NewContextConfigWriter().Write(); err != nil {
+		if err := oktetoContext.NewContextConfigWriter().Write(); err != nil {
 			return err
 		}
 		oktetoLog.Success("'%s' deleted successfully", okCtx)

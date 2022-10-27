@@ -19,11 +19,12 @@ import (
 	"strings"
 
 	"github.com/okteto/okteto/cmd/utils"
-	"github.com/okteto/okteto/pkg/okteto"
+	"github.com/okteto/okteto/pkg/constants"
+	oktetoContext "github.com/okteto/okteto/pkg/context"
 )
 
 var (
-	cloudOption = fmt.Sprintf("%s (Okteto Cloud)", okteto.CloudURL)
+	cloudOption = fmt.Sprintf("%s (Okteto Cloud)", constants.CloudURL)
 	newOEOption = "Create new context"
 )
 
@@ -34,7 +35,7 @@ func getContextsSelection(ctxOptions *ContextOptions) []utils.SelectorItem {
 	}
 	clusters := make([]utils.SelectorItem, 0)
 
-	clusters = append(clusters, utils.SelectorItem{Name: okteto.CloudURL, Label: cloudOption, Enable: true})
+	clusters = append(clusters, utils.SelectorItem{Name: constants.CloudURL, Label: cloudOption, Enable: true})
 	clusters = append(clusters, getOktetoClusters(true)...)
 	if len(k8sClusters) > 0 {
 		clusters = append(clusters, getK8sClusters(k8sClusters)...)
@@ -56,12 +57,12 @@ func getContextsSelection(ctxOptions *ContextOptions) []utils.SelectorItem {
 
 func getOktetoClusters(skipCloud bool) []utils.SelectorItem {
 	orderedOktetoClusters := make([]utils.SelectorItem, 0)
-	ctxStore := okteto.ContextStore()
+	ctxStore := oktetoContext.ContextStore()
 	for ctxName, okCtx := range ctxStore.Contexts {
 		if !okCtx.IsOkteto {
 			continue
 		}
-		if skipCloud && ctxName == okteto.CloudURL {
+		if skipCloud && ctxName == constants.CloudURL {
 			continue
 		}
 		orderedOktetoClusters = append(
@@ -73,10 +74,10 @@ func getOktetoClusters(skipCloud bool) []utils.SelectorItem {
 			})
 	}
 	sort.Slice(orderedOktetoClusters, func(i, j int) bool {
-		if orderedOktetoClusters[i].Name == okteto.CloudURL {
+		if orderedOktetoClusters[i].Name == constants.CloudURL {
 			return true
 		}
-		if orderedOktetoClusters[j].Name == okteto.CloudURL {
+		if orderedOktetoClusters[j].Name == constants.CloudURL {
 			return false
 		}
 		return strings.Compare(orderedOktetoClusters[i].Name, orderedOktetoClusters[j].Name) < 0
@@ -100,7 +101,7 @@ func getK8sClusters(k8sClusters []string) []utils.SelectorItem {
 }
 
 func getInitialPosition(options []utils.SelectorItem) int {
-	currentContext := okteto.ContextStore().CurrentContext
+	currentContext := oktetoContext.ContextStore().CurrentContext
 	for indx, item := range options {
 		if item.Enable && item.Name == currentContext {
 			return indx

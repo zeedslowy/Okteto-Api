@@ -23,9 +23,6 @@ const (
 	// DefaultGlobalNamespace namespace where okteto app is running
 	DefaultGlobalNamespace = "okteto"
 
-	// CloudURL is the default URL of okteto
-	CloudURL = "https://cloud.okteto.com"
-
 	// CloudRegistryURL is the default URL of okteto registry
 	CloudRegistryURL = "registry.cloud.okteto.net"
 
@@ -65,7 +62,4 @@ const (
 	pE1wqLC3rK2TKzt2dCd4rEEg+WaUckoaALIRonUr7QI=
 	-----END CERTIFICATE-----
 	`
-
-	// StagingURL is the default URL of okteto
-	StagingURL = "https://staging.okteto.dev"
 )

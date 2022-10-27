@@ -20,6 +20,7 @@ import (
 
 	"github.com/okteto/okteto/internal/test"
 	"github.com/okteto/okteto/pkg/constants"
+	oktetoContext "github.com/okteto/okteto/pkg/context"
 	"github.com/okteto/okteto/pkg/okteto"
 )
 
@@ -70,7 +71,7 @@ func Test_deleteContext(t *testing.T) {
 			if err := Delete(tt.toDelete); err == nil && tt.expectedErr || err != nil && !tt.expectedErr {
 				t.Fatal(err)
 			}
-			if okteto.ContextStore().CurrentContext != tt.afterContext {
+			if oktetoContext.ContextStore().CurrentContext != tt.afterContext {
 				t.Fatal("not delete correctly")
 			}
 		})

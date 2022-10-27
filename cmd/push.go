@@ -20,6 +20,8 @@ import (
 	"os"
 	"os/signal"
 
+	oktetoContext "github.com/okteto/okteto/pkg/context"
+
 	buildv1 "github.com/okteto/okteto/cmd/build/v1"
 	contextCMD "github.com/okteto/okteto/cmd/context"
 	"github.com/okteto/okteto/cmd/utils"
@@ -119,7 +121,7 @@ func Push(ctx context.Context) *cobra.Command {
 				return err
 			}
 
-			oktetoRegistryURL := okteto.Context().Registry
+			oktetoRegistryURL := oktetoContext.Context().Registry
 
 			if pushOpts.AutoDeploy {
 				oktetoLog.Warning(`The 'deploy' flag is deprecated and will be removed in a future version.
@@ -280,7 +282,7 @@ func runPush(ctx context.Context, dev *model.Dev, oktetoRegistryURL string, push
 }
 
 func buildImage(ctx context.Context, dev *model.Dev, imageFromApp, oktetoRegistryURL string, pushOpts *pushOptions) (string, error) {
-	oktetoLog.Information("Running your build in %s...", okteto.Context().Builder)
+	oktetoLog.Information("Running your build in %s...", oktetoContext.Context().Builder)
 
 	if pushOpts.ImageTag == "" {
 		pushOpts.ImageTag = dev.Push.Name

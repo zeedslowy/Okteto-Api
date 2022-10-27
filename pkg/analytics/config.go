@@ -20,8 +20,10 @@ import (
 
 	"github.com/denisbrodbeck/machineid"
 	"github.com/okteto/okteto/pkg/config"
+	"github.com/okteto/okteto/pkg/constants"
+	oktetoContext "github.com/okteto/okteto/pkg/context"
+
 	oktetoLog "github.com/okteto/okteto/pkg/log"
-	"github.com/okteto/okteto/pkg/okteto"
 )
 
 var (
@@ -38,12 +40,12 @@ type Analytics struct {
 	MachineID string `json:"machineID"`
 }
 
-func getContextType(oktetoContext string) string {
-	if okteto.IsOkteto() {
-		switch oktetoContext {
-		case okteto.CloudURL:
+func getContextType(context string) string {
+	if oktetoContext.IsOkteto() {
+		switch context {
+		case constants.CloudURL:
 			return CloudContext
-		case okteto.StagingURL:
+		case constants.StagingURL:
 			return StagingContext
 		default:
 			return EnterpriseContext
@@ -159,8 +161,8 @@ func Enable() error {
 }
 
 func getTrackID() string {
-	if okteto.Context().UserID != "" {
-		return okteto.Context().UserID
+	if oktetoContext.Context().UserID != "" {
+		return oktetoContext.Context().UserID
 	}
 	a := get()
 	return a.MachineID

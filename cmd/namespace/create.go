@@ -21,9 +21,10 @@ import (
 	contextCMD "github.com/okteto/okteto/cmd/context"
 	"github.com/okteto/okteto/cmd/utils"
 	"github.com/okteto/okteto/pkg/analytics"
+	oktetoContext "github.com/okteto/okteto/pkg/context"
 	oktetoErrors "github.com/okteto/okteto/pkg/errors"
+
 	oktetoLog "github.com/okteto/okteto/pkg/log"
-	"github.com/okteto/okteto/pkg/okteto"
 	"github.com/spf13/cobra"
 )
 
@@ -48,7 +49,7 @@ func Create(ctx context.Context) *cobra.Command {
 			}
 
 			options.Namespace = args[0]
-			if !okteto.IsOkteto() {
+			if !oktetoContext.IsOkteto() {
 				return oktetoErrors.ErrContextIsNotOktetoCluster
 			}
 
@@ -86,9 +87,9 @@ func (nc *NamespaceCommand) Create(ctx context.Context, opts *CreateOptions) err
 		IsOkteto:     true,
 		Save:         true,
 		Show:         false,
-		Token:        okteto.Context().Token,
+		Token:        oktetoContext.Context().Token,
 		Namespace:    oktetoNS,
-		Context:      okteto.Context().Name,
+		Context:      oktetoContext.Context().Name,
 	}
 
 	if err := nc.ctxCmd.Run(ctx, ctxOptions); err != nil {

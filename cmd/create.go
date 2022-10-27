@@ -16,13 +16,14 @@ package cmd
 import (
 	"context"
 
+	oktetoContext "github.com/okteto/okteto/pkg/context"
+
 	contextCMD "github.com/okteto/okteto/cmd/context"
 	"github.com/okteto/okteto/cmd/namespace"
 	"github.com/okteto/okteto/cmd/utils"
 	"github.com/okteto/okteto/pkg/analytics"
 	"github.com/okteto/okteto/pkg/errors"
 	oktetoLog "github.com/okteto/okteto/pkg/log"
-	"github.com/okteto/okteto/pkg/okteto"
 	"github.com/spf13/cobra"
 )
 
@@ -49,7 +50,7 @@ func deprecatedCreateNamespace(ctx context.Context) *cobra.Command {
 			}
 
 			ns := args[0]
-			if !okteto.IsOkteto() {
+			if !oktetoContext.IsOkteto() {
 				return errors.ErrContextIsNotOktetoCluster
 			}
 

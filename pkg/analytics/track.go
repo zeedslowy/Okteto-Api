@@ -24,9 +24,10 @@ import (
 
 	"github.com/dukex/mixpanel"
 	"github.com/okteto/okteto/pkg/config"
+	oktetoContext "github.com/okteto/okteto/pkg/context"
 	oktetoLog "github.com/okteto/okteto/pkg/log"
+
 	"github.com/okteto/okteto/pkg/model"
-	"github.com/okteto/okteto/pkg/okteto"
 )
 
 const (
@@ -384,7 +385,7 @@ func track(event string, success bool, props map[string]interface{}) {
 		return
 	}
 
-	if !okteto.IsContextInitialized() {
+	if !oktetoContext.IsContextInitialized() {
 		oktetoLog.Info("failed to send analytics: okteto context not initialized")
 		return
 	}
@@ -412,21 +413,24 @@ func track(event string, success bool, props map[string]interface{}) {
 	if props == nil {
 		props = map[string]interface{}{}
 	}
+
+	okctx := oktetoContext.Context()
+
 	props["$os"] = mpOS
 	props["version"] = config.VersionString
-	props["$referring_domain"] = okteto.Context().Name
+	props["$referring_domain"] = okctx.Name
 	props["machine_id"] = get().MachineID
-	if okteto.Context().ClusterType != "" {
-		props["clusterType"] = okteto.Context().ClusterType
+	if okctx.ClusterType != "" {
+		props["clusterType"] = okctx.ClusterType
 	}
 
 	props["source"] = origin
 	props["origin"] = origin
 	props["success"] = success
-	props["contextType"] = getContextType(okteto.Context().Name)
-	props["context"] = okteto.Context().Name
-	props["cluster"] = okteto.Context().Name
-	props["isOkteto"] = okteto.Context().IsOkteto
+	props["contextType"] = getContextType(okctx.Name)
+	props["context"] = okctx.Name
+	props["cluster"] = okctx.Name
+	props["isOkteto"] = okctx.IsOkteto
 	if termType := os.Getenv(model.TermEnvVar); termType == "" {
 		props["term-type"] = "other"
 	} else {
@@ -440,8 +444,8 @@ func track(event string, success bool, props map[string]interface{}) {
 }
 
 func disabledByOktetoAdmin() bool {
-	if okteto.IsOktetoCloud() {
+	if oktetoContext.IsOktetoCloud() {
 		return false
 	}
-	return !okteto.Context().Analytics
+	return !oktetoContext.Context().Analytics
 }

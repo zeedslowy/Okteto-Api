@@ -50,7 +50,7 @@ func TestLoginActionPipeline(t *testing.T) {
 func executeLoginAction() error {
 	token := os.Getenv(model.OktetoTokenEnvVar)
 	if token == "" {
-		token = okteto.Context().Token
+		token = oktetoContext.Context().Token
 	}
 
 	actionRepo := fmt.Sprintf("%s%s.git", githubHTTPSURL, loginPath)
@@ -67,7 +67,7 @@ func executeLoginAction() error {
 
 	oktetoURL := os.Getenv(model.OktetoURLEnvVar)
 	if oktetoURL == "" {
-		oktetoURL = okteto.CloudURL
+		oktetoURL = constants.CloudURL
 	}
 	log.Printf("login into %s", oktetoURL)
 	command := fmt.Sprintf("%s/entrypoint.sh", actionFolder)

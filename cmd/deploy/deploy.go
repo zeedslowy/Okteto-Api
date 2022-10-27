@@ -32,6 +32,7 @@ import (
 	"github.com/okteto/okteto/pkg/cmd/pipeline"
 	"github.com/okteto/okteto/pkg/cmd/stack"
 	"github.com/okteto/okteto/pkg/constants"
+	oktetoContext "github.com/okteto/okteto/pkg/context"
 	oktetoErrors "github.com/okteto/okteto/pkg/errors"
 	"github.com/okteto/okteto/pkg/k8s/diverts"
 	"github.com/okteto/okteto/pkg/k8s/ingresses"
@@ -100,7 +101,7 @@ func Deploy(ctx context.Context) *cobra.Command {
 		RunE: func(cmd *cobra.Command, args []string) error {
 
 			// validate cmd options
-			if options.Dependencies && !okteto.IsOkteto() {
+			if options.Dependencies && !oktetoContext.IsOkteto() {
 				return fmt.Errorf("'dependencies' is only supported in clusters that have Okteto installed")
 			}
 
@@ -132,7 +133,7 @@ func Deploy(ctx context.Context) *cobra.Command {
 				options.ManifestPath = uptManifestPath
 			}
 			if err := contextCMD.LoadContextFromPath(ctx, options.Namespace, options.K8sContext, options.ManifestPath); err != nil {
-				if err.Error() == fmt.Errorf(oktetoErrors.ErrNotLogged, okteto.CloudURL).Error() {
+				if err.Error() == fmt.Errorf(oktetoErrors.ErrNotLogged, constants.CloudURL).Error() {
 					return err
 				}
 				if err := contextCMD.NewContextCommand().Run(ctx, &contextCMD.ContextOptions{Namespace: options.Namespace}); err != nil {
@@ -140,8 +141,8 @@ func Deploy(ctx context.Context) *cobra.Command {
 				}
 			}
 
-			if okteto.IsOkteto() {
-				create, err := utils.ShouldCreateNamespace(ctx, okteto.Context().Namespace)
+			if oktetoContext.IsOkteto() {
+				create, err := utils.ShouldCreateNamespace(ctx, oktetoContext.Context().Namespace)
 				if err != nil {
 					return err
 				}
@@ -150,7 +151,7 @@ func Deploy(ctx context.Context) *cobra.Command {
 					if err != nil {
 						return err
 					}
-					nsCmd.Create(ctx, &namespace.CreateOptions{Namespace: okteto.Context().Namespace})
+					nsCmd.Create(ctx, &namespace.CreateOptions{Namespace: oktetoContext.Context().Namespace})
 				}
 			}
 
@@ -261,7 +262,7 @@ func (dc *DeployCommand) RunDeploy(ctx context.Context, deployOptions *Options) 
 		return fmt.Errorf("failed to get the current working directory: %w", err)
 	}
 
-	c, _, err := dc.K8sClientProvider.Provide(okteto.Context().Cfg)
+	c, _, err := dc.K8sClientProvider.Provide(oktetoContext.Context().Cfg)
 	if err != nil {
 		return err
 	}
@@ -310,7 +311,7 @@ func (dc *DeployCommand) RunDeploy(ctx context.Context, deployOptions *Options) 
 	dc.Proxy.SetName(deployOptions.Name)
 	// don't divert if current namespace is the diverted namespace
 	if deployOptions.Manifest.Deploy.Divert != nil {
-		if !okteto.IsOkteto() {
+		if !oktetoContext.IsOkteto() {
 			return oktetoErrors.ErrDivertNotSupported
 		}
 		if deployOptions.Manifest.Deploy.Divert.Namespace != deployOptions.Manifest.Namespace {
@@ -393,7 +394,7 @@ func (dc *DeployCommand) RunDeploy(ctx context.Context, deployOptions *Options) 
 		// Set OKTETO_DISABLE_SPINNER=true env variable, so all the Okteto commands disable spinner which leads to errors
 		fmt.Sprintf("%s=true", oktetoLog.OktetoDisableSpinnerEnvVar),
 		// Set OKTETO_NAMESPACE=namespace-name env variable, so all the commandsruns on the same namespace
-		fmt.Sprintf("%s=%s", model.OktetoNamespaceEnvVar, okteto.Context().Namespace),
+		fmt.Sprintf("%s=%s", model.OktetoNamespaceEnvVar, oktetoContext.Context().Namespace),
 	)
 	oktetoLog.EnableMasking()
 	err = dc.deploy(ctx, deployOptions)
@@ -493,7 +494,7 @@ func (dc *DeployCommand) deploy(ctx context.Context, opts *Options) error {
 
 func (dc *DeployCommand) deployStack(ctx context.Context, opts *Options) error {
 	composeSectionInfo := opts.Manifest.Deploy.ComposeSection
-	composeSectionInfo.Stack.Namespace = okteto.Context().Namespace
+	composeSectionInfo.Stack.Namespace = oktetoContext.Context().Namespace
 
 	var composeFiles []string
 	for _, composeInfo := range composeSectionInfo.ComposesInfo {
@@ -526,7 +527,7 @@ func (dc *DeployCommand) deployDivert(ctx context.Context, opts *Options) error 
 	oktetoLog.StartSpinner()
 	defer oktetoLog.StopSpinner()
 
-	c, _, err := dc.K8sClientProvider.Provide(okteto.Context().Cfg)
+	c, _, err := dc.K8sClientProvider.Provide(oktetoContext.Context().Cfg)
 	if err != nil {
 		return err
 	}
@@ -553,7 +554,7 @@ func (dc *DeployCommand) deployDivert(ctx context.Context, opts *Options) error 
 
 func (dc *DeployCommand) deployEndpoints(ctx context.Context, opts *Options) error {
 
-	c, _, err := dc.K8sClientProvider.Provide(okteto.Context().Cfg)
+	c, _, err := dc.K8sClientProvider.Provide(oktetoContext.Context().Cfg)
 	if err != nil {
 		return err
 	}

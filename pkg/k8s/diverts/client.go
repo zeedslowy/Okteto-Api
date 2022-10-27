@@ -14,7 +14,7 @@
 package diverts
 
 import (
-	"github.com/okteto/okteto/pkg/okteto"
+	oktetoContext "github.com/okteto/okteto/pkg/context"
 	"k8s.io/apimachinery/pkg/runtime"
 	k8sScheme "k8s.io/client-go/kubernetes/scheme"
 	"k8s.io/client-go/rest"
@@ -51,7 +51,7 @@ func NewForConfig(cfg *rest.Config) (*DivertV1Client, error) {
 }
 
 func getDivertClient() (*DivertV1Client, error) {
-	octx := okteto.Context()
+	octx := oktetoContext.Context()
 	clientConfig := clientcmd.NewDefaultClientConfig(*octx.Cfg, nil)
 
 	config, err := clientConfig.ClientConfig()

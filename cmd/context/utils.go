@@ -23,12 +23,12 @@ import (
 	"github.com/okteto/okteto/cmd/utils"
 	"github.com/okteto/okteto/pkg/config"
 	"github.com/okteto/okteto/pkg/constants"
+	oktetoContext "github.com/okteto/okteto/pkg/context"
 	"github.com/okteto/okteto/pkg/discovery"
 	oktetoErrors "github.com/okteto/okteto/pkg/errors"
 	"github.com/okteto/okteto/pkg/k8s/kubeconfig"
 	oktetoLog "github.com/okteto/okteto/pkg/log"
 	"github.com/okteto/okteto/pkg/model"
-	"github.com/okteto/okteto/pkg/okteto"
 	clientcmdapi "k8s.io/client-go/tools/clientcmd/api"
 )
 
@@ -83,8 +83,8 @@ func isCreateNewContextOption(option string) bool {
 }
 
 func askForOktetoURL() (string, error) {
-	clusterURL := okteto.CloudURL
-	ctxStore := okteto.ContextStore()
+	clusterURL := constants.CloudURL
+	ctxStore := oktetoContext.ContextStore()
 	if oCtx, ok := ctxStore.Contexts[ctxStore.CurrentContext]; ok && oCtx.IsOkteto {
 		clusterURL = ctxStore.CurrentContext
 	}
@@ -127,7 +127,7 @@ func addKubernetesContext(cfg *clientcmdapi.Config, ctxResource *model.ContextRe
 	if ctxResource.Namespace == "" {
 		ctxResource.Namespace = "default"
 	}
-	okteto.AddKubernetesContext(ctxResource.Context, ctxResource.Namespace, "")
+	oktetoContext.AddKubernetesContext(ctxResource.Context, ctxResource.Namespace, "")
 	return nil
 }
 
@@ -179,16 +179,16 @@ func LoadManifestWithContext(ctx context.Context, opts ManifestOptions) (*model.
 		}
 	}
 
-	manifest.Namespace = okteto.Context().Namespace
-	manifest.Context = okteto.Context().Name
+	manifest.Namespace = oktetoContext.Context().Namespace
+	manifest.Context = oktetoContext.Context().Name
 
 	for _, dev := range manifest.Dev {
 		if err := utils.LoadManifestRc(dev); err != nil {
 			return nil, err
 		}
 
-		dev.Namespace = okteto.Context().Namespace
-		dev.Context = okteto.Context().Name
+		dev.Namespace = oktetoContext.Context().Namespace
+		dev.Context = oktetoContext.Context().Name
 	}
 
 	return manifest, nil
@@ -224,7 +224,7 @@ func LoadStackWithContext(ctx context.Context, name, namespace string, stackPath
 		}
 		s = &model.Stack{Name: name}
 	}
-	s.Namespace = okteto.Context().Namespace
+	s.Namespace = oktetoContext.Context().Namespace
 	return s, nil
 }
 

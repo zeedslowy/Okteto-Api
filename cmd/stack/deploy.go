@@ -20,6 +20,8 @@ import (
 	"strings"
 	"time"
 
+	oktetoContext "github.com/okteto/okteto/pkg/context"
+
 	contextCMD "github.com/okteto/okteto/cmd/context"
 	"github.com/okteto/okteto/cmd/namespace"
 	"github.com/okteto/okteto/cmd/utils"
@@ -64,7 +66,7 @@ func deploy(ctx context.Context) *cobra.Command {
 			if err != nil {
 				return err
 			}
-			c, config, err := okteto.NewK8sClientProvider().Provide(okteto.Context().Cfg)
+			c, config, err := okteto.NewK8sClientProvider().Provide(oktetoContext.Context().Cfg)
 			if err != nil {
 				return err
 			}
@@ -89,7 +91,7 @@ func deploy(ctx context.Context) *cobra.Command {
 // RunDeploy runs the deploy command sequence
 func (c *DeployCommand) RunDeploy(ctx context.Context, s *model.Stack, options *stack.StackDeployOptions) error {
 
-	if okteto.IsOkteto() {
+	if oktetoContext.IsOkteto() {
 		create, err := utils.ShouldCreateNamespace(ctx, s.Namespace)
 		if err != nil {
 			return err

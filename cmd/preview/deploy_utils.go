@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"strings"
 
+	oktetoContext "github.com/okteto/okteto/pkg/context"
+
 	"github.com/docker/docker/pkg/namesgenerator"
 	"github.com/okteto/okteto/cmd/utils"
 	oktetoLog "github.com/okteto/okteto/pkg/log"
@@ -91,7 +93,7 @@ func getExpandedName(name string) string {
 }
 
 func getPreviewURL(name string) string {
-	oktetoURL := okteto.Context().Name
+	oktetoURL := oktetoContext.Context().Name
 	previewURL := fmt.Sprintf("%s/#/previews/%s", oktetoURL, name)
 	return previewURL
 }

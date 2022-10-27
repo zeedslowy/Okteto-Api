@@ -96,7 +96,7 @@ func Test_useNamespace(t *testing.T) {
 			} else {
 				assert.NoError(t, err)
 
-				assert.Equal(t, tt.changeToNs, okteto.Context().Namespace)
+				assert.Equal(t, tt.changeToNs, oktetoContext.Context().Namespace)
 			}
 
 		})

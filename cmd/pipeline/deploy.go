@@ -25,6 +25,7 @@ import (
 	contextCMD "github.com/okteto/okteto/cmd/context"
 	"github.com/okteto/okteto/cmd/utils"
 	"github.com/okteto/okteto/pkg/cmd/pipeline"
+	oktetoContext "github.com/okteto/okteto/pkg/context"
 	oktetoErrors "github.com/okteto/okteto/pkg/errors"
 	"github.com/okteto/okteto/pkg/k8s/configmaps"
 	oktetoLog "github.com/okteto/okteto/pkg/log"
@@ -70,7 +71,7 @@ func deploy(ctx context.Context) *cobra.Command {
 				return err
 			}
 
-			if !okteto.IsOkteto() {
+			if !oktetoContext.IsOkteto() {
 				return oktetoErrors.ErrContextIsNotOktetoCluster
 			}
 
@@ -137,10 +138,10 @@ func (pc *Command) ExecuteDeployPipeline(ctx context.Context, opts *DeployOption
 	if opts.SkipIfExists {
 		c, _, err := okteto.GetK8sClient()
 		if err != nil {
-			return fmt.Errorf("failed to load okteto context '%s': %v", okteto.Context().Name, err)
+			return fmt.Errorf("failed to load okteto context '%s': %v", oktetoContext.Context().Name, err)
 		}
 
-		_, err = configmaps.Get(ctx, pipeline.TranslatePipelineName(opts.Name), okteto.Context().Namespace, c)
+		_, err = configmaps.Get(ctx, pipeline.TranslatePipelineName(opts.Name), oktetoContext.Context().Namespace, c)
 		if err == nil {
 			oktetoLog.Success("Skipping repository '%s' because it's already deployed", opts.Name)
 			return nil
@@ -203,7 +204,7 @@ func (pc *Command) deployPipeline(ctx context.Context, opts *DeployOptions) (*ty
 				Value: kv[1],
 			})
 		}
-		namespace := okteto.Context().Namespace
+		namespace := oktetoContext.Context().Namespace
 		oktetoLog.Infof("deploy pipeline %s defined on file='%s' repository=%s branch=%s on namespace=%s", opts.Name, opts.File, opts.Repository, opts.Branch, namespace)
 
 		resp, err = pc.okClient.Pipeline().Deploy(ctx, opts.Name, opts.Repository, opts.Branch, opts.File, varList)

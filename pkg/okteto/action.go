@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"time"
 
+	oktetoContext "github.com/okteto/okteto/pkg/context"
 	oktetoLog "github.com/okteto/okteto/pkg/log"
 	"github.com/okteto/okteto/pkg/types"
 	"github.com/shurcooL/graphql"
@@ -12,7 +13,7 @@ import (
 
 // GetAction gets a installer job given its name
 func (c *pipelineClient) GetAction(ctx context.Context, name string) (*types.Action, error) {
-	namespace := Context().Namespace
+	namespace := oktetoContext.Context().Namespace
 	var queryStruct struct {
 		Action struct {
 			Id     graphql.String

@@ -23,6 +23,8 @@ import (
 	"strings"
 	"time"
 
+	oktetoContext "github.com/okteto/okteto/pkg/context"
+
 	"github.com/moby/term"
 	buildv1 "github.com/okteto/okteto/cmd/build/v1"
 	buildv2 "github.com/okteto/okteto/cmd/build/v2"
@@ -132,7 +134,7 @@ func Up() *cobra.Command {
 			manifestOpts := contextCMD.ManifestOptions{Filename: upOptions.ManifestPath, Namespace: upOptions.Namespace, K8sContext: upOptions.K8sContext}
 			oktetoManifest, err := contextCMD.LoadManifestWithContext(ctx, manifestOpts)
 			if err != nil {
-				if err.Error() == fmt.Errorf(oktetoErrors.ErrNotLogged, okteto.CloudURL).Error() {
+				if err.Error() == fmt.Errorf(oktetoErrors.ErrNotLogged, constants.CloudURL).Error() {
 					return err
 				}
 
@@ -191,10 +193,10 @@ func Up() *cobra.Command {
 						return err
 					}
 					if oktetoManifest.Namespace == "" {
-						oktetoManifest.Namespace = okteto.Context().Namespace
+						oktetoManifest.Namespace = oktetoContext.Context().Namespace
 					}
 					if oktetoManifest.Context == "" {
-						oktetoManifest.Context = okteto.Context().Name
+						oktetoManifest.Context = oktetoContext.Context().Name
 					}
 					oktetoManifest.IsV2 = true
 					for devName, d := range oktetoManifest.Dev {
@@ -401,10 +403,10 @@ func LoadManifestWithInit(ctx context.Context, k8sContext, namespace, devPath st
 	}
 
 	if manifest.Namespace == "" {
-		manifest.Namespace = okteto.Context().Namespace
+		manifest.Namespace = oktetoContext.Context().Namespace
 	}
 	if manifest.Context == "" {
-		manifest.Context = okteto.Context().Name
+		manifest.Context = oktetoContext.Context().Name
 	}
 	manifest.IsV2 = true
 	for devName, d := range manifest.Dev {
@@ -445,8 +447,8 @@ func loadManifestOverrides(dev *model.Dev, upOptions *UpOptions) error {
 		}
 	}
 
-	dev.Username = okteto.Context().Username
-	dev.RegistryURL = okteto.Context().Registry
+	dev.Username = oktetoContext.Context().Username
+	dev.RegistryURL = oktetoContext.Context().Registry
 
 	return nil
 }
@@ -675,7 +677,7 @@ func (up *upContext) buildDevImage(ctx context.Context, app apps.App) error {
 		}
 	}
 
-	oktetoRegistryURL := okteto.Context().Registry
+	oktetoRegistryURL := oktetoContext.Context().Registry
 	if oktetoRegistryURL == "" && up.Dev.Autocreate && image == "" {
 		return fmt.Errorf("no value for 'image' has been provided in your okteto manifest")
 	}
@@ -688,7 +690,7 @@ func (up *upContext) buildDevImage(ctx context.Context, app apps.App) error {
 		image = devContainer.Image
 	}
 
-	oktetoLog.Information("Running your build in %s...", okteto.Context().Builder)
+	oktetoLog.Information("Running your build in %s...", oktetoContext.Context().Builder)
 
 	imageTag := registry.GetImageTag(image, up.Dev.Name, up.Dev.Namespace, oktetoRegistryURL)
 	oktetoLog.Infof("building dev image tag %s", imageTag)

@@ -17,6 +17,8 @@ import (
 	"context"
 	"fmt"
 
+	oktetoContext "github.com/okteto/okteto/pkg/context"
+
 	contextCMD "github.com/okteto/okteto/cmd/context"
 	"github.com/okteto/okteto/cmd/utils"
 	"github.com/okteto/okteto/pkg/analytics"
@@ -49,12 +51,12 @@ func Use(ctx context.Context) *cobra.Command {
 				namespace = args[0]
 			}
 
-			if !okteto.IsOkteto() {
+			if !oktetoContext.IsOkteto() {
 				return errors.ErrContextIsNotOktetoCluster
 			}
 
 			if options.personal {
-				namespace = okteto.Context().PersonalNamespace
+				namespace = oktetoContext.Context().PersonalNamespace
 			}
 
 			nsCmd, err := NewCommand()
@@ -84,7 +86,7 @@ func (nc *NamespaceCommand) Use(ctx context.Context, namespace string) error {
 	return nc.ctxCmd.Run(
 		ctx,
 		&contextCMD.ContextOptions{
-			Context:      okteto.Context().Name,
+			Context:      oktetoContext.Context().Name,
 			Namespace:    namespace,
 			Save:         true,
 			Show:         false,
@@ -161,7 +163,7 @@ func askForOktetoNamespace() string {
 }
 
 func getInitialPosition(options []utils.SelectorItem) int {
-	currentNamespace := okteto.Context().Namespace
+	currentNamespace := oktetoContext.Context().Namespace
 	for indx, ns := range options {
 		if ns.Label == currentNamespace {
 			return indx

@@ -17,6 +17,7 @@ import (
 	"context"
 	"fmt"
 
+	oktetoContext "github.com/okteto/okteto/pkg/context"
 	"github.com/okteto/okteto/pkg/types"
 	"github.com/shurcooL/graphql"
 )
@@ -48,7 +49,7 @@ func (c *OktetoClient) GetCredentials(ctx context.Context) (*types.Credential, e
 	}
 
 	if cred.Server == "" {
-		return nil, fmt.Errorf("%s is not available. Please, retry again in a few minutes", Context().Name)
+		return nil, fmt.Errorf("%s is not available. Please, retry again in a few minutes", oktetoContext.Context().Name)
 	}
 
 	return cred, nil

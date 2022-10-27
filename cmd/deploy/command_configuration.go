@@ -21,12 +21,13 @@ import (
 	"reflect"
 	"strings"
 
+	oktetoContext "github.com/okteto/okteto/pkg/context"
+
 	"github.com/okteto/okteto/cmd/utils"
 	"github.com/okteto/okteto/pkg/cmd/pipeline"
 	"github.com/okteto/okteto/pkg/cmd/stack"
 	oktetoLog "github.com/okteto/okteto/pkg/log"
 	"github.com/okteto/okteto/pkg/model"
-	"github.com/okteto/okteto/pkg/okteto"
 	giturls "github.com/whilp/git-urls"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/client-go/kubernetes"
@@ -34,10 +35,10 @@ import (
 
 func setDeployOptionsValuesFromManifest(ctx context.Context, deployOptions *Options, cwd string, c kubernetes.Interface) error {
 	if deployOptions.Manifest.Context == "" {
-		deployOptions.Manifest.Context = okteto.Context().Name
+		deployOptions.Manifest.Context = oktetoContext.Context().Name
 	}
 	if deployOptions.Manifest.Namespace == "" {
-		deployOptions.Manifest.Namespace = okteto.Context().Namespace
+		deployOptions.Manifest.Namespace = oktetoContext.Context().Namespace
 	}
 
 	if deployOptions.Name == "" {
@@ -145,13 +146,13 @@ func addEnvVars(ctx context.Context, cwd string) error {
 		os.Setenv(model.OktetoGitCommitEnvVar, sha)
 	}
 	if os.Getenv(model.OktetoRegistryURLEnvVar) == "" {
-		os.Setenv(model.OktetoRegistryURLEnvVar, okteto.Context().Registry)
+		os.Setenv(model.OktetoRegistryURLEnvVar, oktetoContext.Context().Registry)
 	}
 	if os.Getenv(model.OktetoBuildkitHostURLEnvVar) == "" {
-		os.Setenv(model.OktetoBuildkitHostURLEnvVar, okteto.Context().Builder)
+		os.Setenv(model.OktetoBuildkitHostURLEnvVar, oktetoContext.Context().Builder)
 	}
 	if os.Getenv(model.OktetoTokenEnvVar) == "" {
-		os.Setenv(model.OktetoTokenEnvVar, okteto.Context().Token)
+		os.Setenv(model.OktetoTokenEnvVar, oktetoContext.Context().Token)
 	}
 	oktetoLog.AddMaskedWord(os.Getenv(model.OktetoTokenEnvVar))
 	return nil

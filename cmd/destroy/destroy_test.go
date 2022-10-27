@@ -163,7 +163,7 @@ func TestDestroyWithErrorDeletingVolumes(t *testing.T) {
 	assert.False(t, destroyer.destroyedVolumes)
 
 	// check if configmap has been created
-	cfg, _ := configmaps.Get(ctx, pipeline.TranslatePipelineName(opts.Name), okteto.Context().Namespace, fakeClient)
+	cfg, _ := configmaps.Get(ctx, pipeline.TranslatePipelineName(opts.Name), oktetoContext.Context().Namespace, fakeClient)
 	assert.NotNil(t, cfg)
 }
 
@@ -223,7 +223,7 @@ func TestDestroyWithErrorListingSecrets(t *testing.T) {
 			assert.Equal(t, tt.want, len(executor.executed))
 
 			// check if configmap has been created
-			cfg, _ := configmaps.Get(ctx, pipeline.TranslatePipelineName(opts.Name), okteto.Context().Namespace, fakeClient)
+			cfg, _ := configmaps.Get(ctx, pipeline.TranslatePipelineName(opts.Name), oktetoContext.Context().Namespace, fakeClient)
 			assert.NotNil(t, cfg)
 		})
 	}
@@ -360,7 +360,7 @@ func TestDestroyWithError(t *testing.T) {
 			assert.True(t, destroyer.destroyedVolumes)
 
 			// check if configmap has been created
-			cfg, _ := configmaps.Get(ctx, pipeline.TranslatePipelineName(opts.Name), okteto.Context().Namespace, fakeClient)
+			cfg, _ := configmaps.Get(ctx, pipeline.TranslatePipelineName(opts.Name), oktetoContext.Context().Namespace, fakeClient)
 			assert.NotNil(t, cfg)
 		})
 	}
@@ -592,7 +592,7 @@ func TestDestroyWithoutError(t *testing.T) {
 			assert.True(t, destroyer.destroyedVolumes)
 
 			// check if configmap has been created
-			cfg, _ := configmaps.Get(ctx, pipeline.TranslatePipelineName(opts.Name), okteto.Context().Namespace, fakeClient)
+			cfg, _ := configmaps.Get(ctx, pipeline.TranslatePipelineName(opts.Name), oktetoContext.Context().Namespace, fakeClient)
 			assert.Nil(t, cfg)
 		})
 	}
@@ -824,7 +824,7 @@ func TestDestroyWithoutErrorInsideOktetoDeploy(t *testing.T) {
 			if err != nil {
 				t.Fatal("could not create fake k8s client")
 			}
-			cfg, err := configmaps.Get(ctx, pipeline.TranslatePipelineName(opts.Name), okteto.Context().Namespace, fakeClient)
+			cfg, err := configmaps.Get(ctx, pipeline.TranslatePipelineName(opts.Name), oktetoContext.Context().Namespace, fakeClient)
 			assert.True(t, k8sErrors.IsNotFound(err))
 			assert.Nil(t, cfg)
 		})
@@ -875,7 +875,7 @@ func TestDestroyWithoutForceOptionAndFailedCommands(t *testing.T) {
 	assert.False(t, destroyer.destroyedVolumes)
 
 	// check if configmap has been created
-	cfg, _ := configmaps.Get(ctx, pipeline.TranslatePipelineName(opts.Name), okteto.Context().Namespace, fakeClient)
+	cfg, _ := configmaps.Get(ctx, pipeline.TranslatePipelineName(opts.Name), oktetoContext.Context().Namespace, fakeClient)
 	assert.NotNil(t, cfg)
 }
 
@@ -922,6 +922,6 @@ func TestDestroyWithForceOptionAndFailedCommands(t *testing.T) {
 	assert.True(t, destroyer.destroyedVolumes)
 
 	// check if configmap has been created
-	cfg, _ := configmaps.Get(ctx, pipeline.TranslatePipelineName(opts.Name), okteto.Context().Namespace, fakeClient)
+	cfg, _ := configmaps.Get(ctx, pipeline.TranslatePipelineName(opts.Name), oktetoContext.Context().Namespace, fakeClient)
 	assert.Nil(t, cfg)
 }

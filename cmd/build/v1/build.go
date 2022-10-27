@@ -21,9 +21,10 @@ import (
 	"github.com/okteto/okteto/cmd/utils"
 	"github.com/okteto/okteto/pkg/analytics"
 	"github.com/okteto/okteto/pkg/cmd/build"
+	oktetoContext "github.com/okteto/okteto/pkg/context"
 	oktetoErrors "github.com/okteto/okteto/pkg/errors"
+
 	oktetoLog "github.com/okteto/okteto/pkg/log"
-	"github.com/okteto/okteto/pkg/okteto"
 	"github.com/okteto/okteto/pkg/registry"
 	"github.com/okteto/okteto/pkg/types"
 )
@@ -86,14 +87,14 @@ func (bc *OktetoBuilder) Build(ctx context.Context, options *types.BuildOptions)
 	}
 
 	buildMsg := fmt.Sprintf("Building '%s'", options.File)
-	if okteto.Context().Builder == "" {
+	if oktetoContext.Context().Builder == "" {
 		oktetoLog.Information("%s using your local docker daemon", buildMsg)
 	} else {
-		oktetoLog.Information("%s in %s...", buildMsg, okteto.Context().Builder)
+		oktetoLog.Information("%s in %s...", buildMsg, oktetoContext.Context().Builder)
 	}
 
 	if err := bc.Builder.Run(ctx, options); err != nil {
-		analytics.TrackBuild(okteto.Context().Builder, false)
+		analytics.TrackBuild(oktetoContext.Context().Builder, false)
 		return err
 	}
 
@@ -104,6 +105,6 @@ func (bc *OktetoBuilder) Build(ctx context.Context, options *types.BuildOptions)
 		oktetoLog.Success(fmt.Sprintf("Image '%s' successfully pushed", options.Tag))
 	}
 
-	analytics.TrackBuild(okteto.Context().Builder, true)
+	analytics.TrackBuild(oktetoContext.Context().Builder, true)
 	return nil
 }

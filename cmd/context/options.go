@@ -16,8 +16,9 @@ package context
 import (
 	"os"
 
+	"github.com/okteto/okteto/pkg/constants"
+	oktetoContext "github.com/okteto/okteto/pkg/context"
 	"github.com/okteto/okteto/pkg/model"
-	"github.com/okteto/okteto/pkg/okteto"
 )
 
 type ContextOptions struct {
@@ -41,7 +42,7 @@ func (o *ContextOptions) initFromContext() {
 	if o.Context != "" {
 		return
 	}
-	ctxStore := okteto.ContextStore()
+	ctxStore := oktetoContext.ContextStore()
 	if ctxStore.CurrentContext == "" {
 		return
 	}
@@ -72,7 +73,7 @@ func (o *ContextOptions) initFromEnvVars() {
 	if o.Token != "" {
 		o.IsOkteto = true
 		if o.Context == "" {
-			o.Context = okteto.CloudURL
+			o.Context = constants.CloudURL
 		}
 	}
 

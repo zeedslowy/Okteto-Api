@@ -18,6 +18,7 @@ import (
 	"fmt"
 	"strings"
 
+	oktetoContext "github.com/okteto/okteto/pkg/context"
 	oktetoErrors "github.com/okteto/okteto/pkg/errors"
 	oktetoLog "github.com/okteto/okteto/pkg/log"
 	"github.com/okteto/okteto/pkg/model"
@@ -76,7 +77,7 @@ func (bc *OktetoBuilder) GetServicesToBuild(ctx context.Context, manifest *model
 func (bc *OktetoBuilder) checkServicesToBuild(service string, manifest *model.Manifest, ch chan string) error {
 	buildInfo := manifest.Build[service].Copy()
 	isStack := manifest.Type == model.StackType
-	if isStack && okteto.IsOkteto() && !registry.IsOktetoRegistry(buildInfo.Image) {
+	if isStack && oktetoContext.IsOkteto() && !registry.IsOktetoRegistry(buildInfo.Image) {
 		buildInfo.Image = ""
 	}
 	tag := getToBuildTag(manifest.Name, service, buildInfo)
@@ -108,7 +109,7 @@ func (bc *OktetoBuilder) checkServicesToBuild(service string, manifest *model.Ma
 func getToBuildTag(manifestName, svcName string, b *model.BuildInfo) string {
 	targetRegistry := okteto.DevRegistry
 	switch {
-	case !okteto.IsOkteto():
+	case !oktetoContext.IsOkteto():
 		return b.Image
 	case (shouldBuildFromDockerfile(b) && shouldAddVolumeMounts(b)) || shouldAddVolumeMounts(b):
 		return fmt.Sprintf("%s/%s-%s:%s", targetRegistry, manifestName, svcName, model.OktetoImageTagWithVolumes)

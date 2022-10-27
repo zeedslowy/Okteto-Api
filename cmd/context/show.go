@@ -19,8 +19,8 @@ import (
 	"fmt"
 
 	"github.com/okteto/okteto/cmd/utils"
+	oktetoContext "github.com/okteto/okteto/pkg/context"
 	oktetoLog "github.com/okteto/okteto/pkg/log"
-	"github.com/okteto/okteto/pkg/okteto"
 	"github.com/spf13/cobra"
 	"gopkg.in/yaml.v2"
 )
@@ -38,7 +38,7 @@ func Show() *cobra.Command {
 			if err := NewContextCommand().Run(ctx, &ContextOptions{raiseNotCtxError: true}); err != nil {
 				return err
 			}
-			ctxStore := okteto.ContextStore()
+			ctxStore := oktetoContext.ContextStore()
 			current := ctxStore.Contexts[ctxStore.CurrentContext]
 			if err := validateOutput(output); err != nil {
 				return err

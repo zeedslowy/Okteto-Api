@@ -86,7 +86,7 @@ func Test_createNamespace(t *testing.T) {
 				Namespace: tt.newNs,
 			})
 			assert.Equal(t, nil, err)
-			assert.Equal(t, tt.newNs, okteto.Context().Namespace)
+			assert.Equal(t, tt.newNs, oktetoContext.Context().Namespace)
 		})
 	}
 }

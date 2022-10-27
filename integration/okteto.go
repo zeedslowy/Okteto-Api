@@ -29,7 +29,6 @@ import (
 	"github.com/okteto/okteto/pkg/config"
 	"github.com/okteto/okteto/pkg/k8s/kubeconfig"
 	"github.com/okteto/okteto/pkg/model"
-	"github.com/okteto/okteto/pkg/okteto"
 )
 
 // GetOktetoPath returns the okteto path used to run tests
@@ -62,7 +61,7 @@ func GetToken() string {
 	if v := os.Getenv(model.OktetoTokenEnvVar); v != "" {
 		token = v
 	} else {
-		token = okteto.Context().Token
+		token = oktetoContext.Context().Token
 	}
 	return token
 }
@@ -149,7 +148,7 @@ func SkipIfWindows(t *testing.T) {
 
 // SkipIfNotOktetoCluster skips a tests if is not on an okteto cluster
 func SkipIfNotOktetoCluster(t *testing.T) {
-	if !okteto.Context().IsOkteto {
+	if !oktetoContext.Context().IsOkteto {
 		t.Skip("Skipping because is not on an okteto cluster")
 	}
 }

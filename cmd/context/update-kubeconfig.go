@@ -18,9 +18,10 @@ import (
 
 	"github.com/okteto/okteto/cmd/utils"
 	"github.com/okteto/okteto/pkg/config"
+	oktetoContext "github.com/okteto/okteto/pkg/context"
 	"github.com/okteto/okteto/pkg/k8s/kubeconfig"
 	oktetoLog "github.com/okteto/okteto/pkg/log"
-	"github.com/okteto/okteto/pkg/okteto"
+
 	"github.com/spf13/cobra"
 )
 
@@ -50,13 +51,13 @@ func UpdateKubeconfigCMD() *cobra.Command {
 }
 
 func ExecuteUpdateKubeconfig() error {
-	if err := kubeconfig.Write(okteto.Context().Cfg, config.GetKubeconfigPath()[0]); err != nil {
+	if err := kubeconfig.Write(oktetoContext.Context().Cfg, config.GetKubeconfigPath()[0]); err != nil {
 		return err
 	}
-	k8sContext := okteto.Context().Name
-	if okteto.Context().IsOkteto {
-		k8sContext = okteto.UrlToKubernetesContext(k8sContext)
+	k8sContext := oktetoContext.Context().Name
+	if oktetoContext.Context().IsOkteto {
+		k8sContext = oktetoContext.UrlToKubernetesContext(k8sContext)
 	}
-	oktetoLog.Success("Updated kubernetes context '%s/%s' in '%s'", k8sContext, okteto.Context().Namespace, config.GetKubeconfigPath())
+	oktetoLog.Success("Updated kubernetes context '%s/%s' in '%s'", k8sContext, oktetoContext.Context().Namespace, config.GetKubeconfigPath())
 	return nil
 }

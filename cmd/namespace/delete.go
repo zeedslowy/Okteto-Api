@@ -20,8 +20,10 @@ import (
 	contextCMD "github.com/okteto/okteto/cmd/context"
 	"github.com/okteto/okteto/cmd/utils"
 	"github.com/okteto/okteto/pkg/analytics"
+	oktetoContext "github.com/okteto/okteto/pkg/context"
 	oktetoErrors "github.com/okteto/okteto/pkg/errors"
 	oktetoLog "github.com/okteto/okteto/pkg/log"
+
 	"github.com/okteto/okteto/pkg/okteto"
 	"github.com/spf13/cobra"
 )
@@ -37,7 +39,7 @@ func Delete(ctx context.Context) *cobra.Command {
 				return err
 			}
 
-			if !okteto.IsOkteto() {
+			if !oktetoContext.IsOkteto() {
 				return oktetoErrors.ErrContextIsNotOktetoCluster
 			}
 
@@ -61,14 +63,14 @@ func (nc *NamespaceCommand) ExecuteDeleteNamespace(ctx context.Context, namespac
 	}
 
 	oktetoLog.Success("Namespace '%s' deleted", namespace)
-	if okteto.Context().Namespace == namespace {
-		personalNamespace := okteto.Context().PersonalNamespace
+	if oktetoContext.Context().Namespace == namespace {
+		personalNamespace := oktetoContext.Context().PersonalNamespace
 		if personalNamespace == "" {
 			personalNamespace = okteto.GetSanitizedUsername()
 		}
 		ctxOptions := &contextCMD.ContextOptions{
 			Namespace:    personalNamespace,
-			Context:      okteto.Context().Name,
+			Context:      oktetoContext.Context().Name,
 			Save:         true,
 			IsCtxCommand: true,
 		}

@@ -118,7 +118,7 @@ func Test_deleteNamespace(t *testing.T) {
 				assert.NoError(t, err)
 			}
 
-			assert.Equal(t, tt.finalNs, okteto.Context().Namespace)
+			assert.Equal(t, tt.finalNs, oktetoContext.Context().Namespace)
 
 			ns, err := fakeOktetoClient.Namespaces().List(ctx)
 			assert.Equal(t, nil, err)

@@ -26,6 +26,8 @@ import (
 	"github.com/okteto/okteto/pkg/analytics"
 	"github.com/okteto/okteto/pkg/cmd/login"
 	"github.com/okteto/okteto/pkg/config"
+	"github.com/okteto/okteto/pkg/constants"
+	oktetoContext "github.com/okteto/okteto/pkg/context"
 	oktetoErrors "github.com/okteto/okteto/pkg/errors"
 	"github.com/okteto/okteto/pkg/filesystem"
 	"github.com/okteto/okteto/pkg/k8s/kubeconfig"
@@ -42,7 +44,7 @@ type ContextCommand struct {
 	LoginController      login.LoginInterface
 	OktetoClientProvider types.OktetoClientProvider
 
-	OktetoContextWriter okteto.ContextConfigWriterInterface
+	OktetoContextWriter oktetoContext.ContextConfigWriterInterface
 }
 
 // NewContextCommand creates a new ContextCommand
@@ -51,7 +53,7 @@ func NewContextCommand() *ContextCommand {
 		K8sClientProvider:    okteto.NewK8sClientProvider(),
 		LoginController:      login.NewLoginController(),
 		OktetoClientProvider: okteto.NewOktetoClientProvider(),
-		OktetoContextWriter:  okteto.NewContextConfigWriter(),
+		OktetoContextWriter:  oktetoContext.NewContextConfigWriter(),
 	}
 }
 
@@ -106,7 +108,7 @@ If you need to automate authentication or if you don't want to use browser-based
 func (c *ContextCommand) UseContext(ctx context.Context, ctxOptions *ContextOptions) error {
 	created := false
 
-	ctxStore := okteto.ContextStore()
+	ctxStore := oktetoContext.ContextStore()
 	if okCtx, ok := ctxStore.Contexts[ctxOptions.Context]; ok && okCtx.IsOkteto {
 		ctxOptions.IsOkteto = true
 	}
@@ -116,7 +118,7 @@ func (c *ContextCommand) UseContext(ctx context.Context, ctxOptions *ContextOpti
 		ctxOptions.IsOkteto = true
 	}
 
-	if ctxOptions.Context == okteto.CloudURL {
+	if ctxOptions.Context == constants.CloudURL {
 		ctxOptions.IsOkteto = true
 	}
 
@@ -130,7 +132,7 @@ func (c *ContextCommand) UseContext(ctx context.Context, ctxOptions *ContextOpti
 				return oktetoErrors.UserError{E: fmt.Errorf("invalid okteto context '%s'", ctxOptions.Context),
 					Hint: "Please run 'okteto context' to select one context"}
 			}
-			transformedCtx := okteto.K8sContextToOktetoUrl(ctx, ctxOptions.Context, ctxOptions.Namespace, c.K8sClientProvider)
+			transformedCtx := oktetoContext.K8sContextToOktetoUrl(ctx, ctxOptions.Context, ctxOptions.Namespace, c.K8sClientProvider)
 			if transformedCtx != ctxOptions.Context {
 				ctxOptions.Context = transformedCtx
 				ctxOptions.IsOkteto = true
@@ -139,7 +141,7 @@ func (c *ContextCommand) UseContext(ctx context.Context, ctxOptions *ContextOpti
 	}
 
 	if okCtx, ok := ctxStore.Contexts[ctxOptions.Context]; !ok {
-		ctxStore.Contexts[ctxOptions.Context] = &okteto.OktetoContext{Name: ctxOptions.Context}
+		ctxStore.Contexts[ctxOptions.Context] = &oktetoContext.OktetoContext{Name: ctxOptions.Context}
 		created = true
 	} else if ctxOptions.Token == "" {
 		// this is to avoid login with the browser again if we already have a valid token
@@ -184,7 +186,7 @@ func (c *ContextCommand) UseContext(ctx context.Context, ctxOptions *ContextOpti
 	}
 
 	if ctxOptions.IsCtxCommand {
-		oktetoLog.Success("Using context %s @ %s", okteto.Context().Namespace, okteto.RemoveSchema(ctxStore.CurrentContext))
+		oktetoLog.Success("Using context %s @ %s", oktetoContext.Context().Namespace, okteto.RemoveSchema(ctxStore.CurrentContext))
 		if oktetoLog.GetOutputFormat() == oktetoLog.JSONFormat {
 			if err := showCurrentCtxJSON(); err != nil {
 				return err
@@ -209,7 +211,7 @@ func hasAccessToNamespace(ctx context.Context, c *ContextCommand, ctxOptions *Co
 
 		return hasOktetoClientAccess, nil
 	} else {
-		k8sClient, _, err := c.K8sClientProvider.Provide(okteto.Context().Cfg)
+		k8sClient, _, err := c.K8sClientProvider.Provide(oktetoContext.Context().Cfg)
 		if err != nil {
 			return false, err
 		}
@@ -227,7 +229,7 @@ func (c *ContextCommand) initOktetoContext(ctx context.Context, ctxOptions *Cont
 	var userContext *types.UserContext
 	userContext, err := getLoggedUserContext(ctx, c, ctxOptions)
 	if err != nil {
-		if err.Error() == fmt.Errorf(oktetoErrors.ErrNotLogged, okteto.Context().Name).Error() && ctxOptions.IsCtxCommand {
+		if err.Error() == fmt.Errorf(oktetoErrors.ErrNotLogged, oktetoContext.Context().Name).Error() && ctxOptions.IsCtxCommand {
 			oktetoLog.Warning("Your token is invalid. Generating a new one...")
 			ctxOptions.Token = ""
 			userContext, err = getLoggedUserContext(ctx, c, ctxOptions)
@@ -242,18 +244,18 @@ func (c *ContextCommand) initOktetoContext(ctx context.Context, ctxOptions *Cont
 	if ctxOptions.Namespace == "" {
 		ctxOptions.Namespace = userContext.User.Namespace
 	}
-	okteto.AddOktetoContext(ctxOptions.Context, &userContext.User, ctxOptions.Namespace, userContext.User.Namespace)
+	oktetoContext.AddOktetoContext(ctxOptions.Context, &userContext.User, ctxOptions.Namespace, userContext.User.Namespace)
 	cfg := kubeconfig.Get(config.GetKubeconfigPath())
 	if cfg == nil {
 		cfg = kubeconfig.Create()
 	}
-	okteto.AddOktetoCredentialsToCfg(cfg, &userContext.Credentials, ctxOptions.Namespace, userContext.User.ID, okteto.Context().Name)
-	okteto.Context().Cfg = cfg
-	okteto.Context().IsOkteto = true
+	oktetoContext.AddOktetoCredentialsToCfg(cfg, &userContext.Credentials, ctxOptions.Namespace, userContext.User.ID, oktetoContext.Context().Name)
+	oktetoContext.Context().Cfg = cfg
+	oktetoContext.Context().IsOkteto = true
 
 	setSecrets(userContext.Secrets)
 
-	os.Setenv(model.OktetoUserNameEnvVar, okteto.Context().Username)
+	os.Setenv(model.OktetoUserNameEnvVar, oktetoContext.Context().Username)
 
 	return nil
 }
@@ -266,7 +268,7 @@ func getLoggedUserContext(ctx context.Context, c *ContextCommand, ctxOptions *Co
 
 	ctxOptions.Token = user.Token
 
-	okteto.Context().Token = user.Token
+	oktetoContext.Context().Token = user.Token
 
 	userContext, err := c.getUserContext(ctx)
 	if err != nil {
@@ -295,12 +297,12 @@ func (*ContextCommand) initKubernetesContext(ctxOptions *ContextOptions) error {
 		ctxOptions.Namespace = cfg.Contexts[ctxOptions.Context].Namespace
 	}
 
-	okteto.AddKubernetesContext(ctxOptions.Context, ctxOptions.Namespace, ctxOptions.Builder)
+	oktetoContext.AddKubernetesContext(ctxOptions.Context, ctxOptions.Namespace, ctxOptions.Builder)
 
-	kubeCtx.Namespace = okteto.Context().Namespace
-	cfg.CurrentContext = okteto.Context().Name
-	okteto.Context().Cfg = cfg
-	okteto.Context().IsOkteto = false
+	kubeCtx.Namespace = oktetoContext.Context().Namespace
+	cfg.CurrentContext = oktetoContext.Context().Name
+	oktetoContext.Context().Cfg = cfg
+	oktetoContext.Context().IsOkteto = false
 
 	return nil
 }
@@ -320,7 +322,7 @@ func (c ContextCommand) getUserContext(ctx context.Context) (*types.UserContext,
 				oktetoLog.Infof("error updating okteto contexts: %v", err)
 				return nil, fmt.Errorf(oktetoErrors.ErrCorruptedOktetoContexts, config.GetOktetoContextsStorePath())
 			}
-			return nil, fmt.Errorf(oktetoErrors.ErrNotLogged, okteto.Context().Name)
+			return nil, fmt.Errorf(oktetoErrors.ErrNotLogged, oktetoContext.Context().Name)
 		}
 
 		// If there is a TLS error, don't continue the loop and return the raw error
@@ -336,8 +338,8 @@ func (c ContextCommand) getUserContext(ctx context.Context) (*types.UserContext,
 
 		// If userID is not on context config file we add it and save it.
 		// this prevents from relogin to actual users
-		if okteto.Context().UserID == "" && okteto.Context().IsOkteto {
-			okteto.Context().UserID = userContext.User.ID
+		if oktetoContext.Context().UserID == "" && oktetoContext.Context().IsOkteto {
+			oktetoContext.Context().UserID = userContext.User.ID
 			if err := c.OktetoContextWriter.Write(); err != nil {
 				oktetoLog.Infof("error updating okteto contexts: %v", err)
 				return nil, fmt.Errorf(oktetoErrors.ErrCorruptedOktetoContexts, config.GetOktetoContextsStorePath())
@@ -366,7 +368,7 @@ func isUrl(u string) bool {
 }
 
 func showCurrentCtxJSON() error {
-	okCtx := okteto.Context().ToViewer()
+	okCtx := oktetoContext.Context().ToViewer()
 	ctxRaw, err := json.MarshalIndent(okCtx, "", "\t")
 	if err != nil {
 		return err
