@@ -16,16 +16,12 @@ package cmd
 import (
 	"context"
 	"fmt"
-	"os"
-	"os/signal"
-	"time"
 
 	contextCMD "github.com/okteto/okteto/cmd/context"
 	"github.com/okteto/okteto/cmd/utils"
 	"github.com/okteto/okteto/pkg/cmd/status"
 	"github.com/okteto/okteto/pkg/config"
 	oktetoErrors "github.com/okteto/okteto/pkg/errors"
-	oktetoLog "github.com/okteto/okteto/pkg/log"
 	"github.com/okteto/okteto/pkg/okteto"
 	"github.com/okteto/okteto/pkg/syncthing"
 	"github.com/spf13/cobra"
@@ -65,6 +61,12 @@ func Status() *cobra.Command {
 			if err != nil {
 				return err
 			}
+			if status == "synchronizing" {
+				sy, err := syncthing.Load(dev)
+				if err == nil && isSynchronized(ctx, sy) {
+					status = "ready"
+				}
+			}
 			fmt.Printf("{\"status\": \"%s\"}\n", status)
 			return nil
 		},
@@ -77,59 +79,13 @@ func Status() *cobra.Command {
 	return cmd
 }
 
-func runWithWatch(ctx context.Context, sy *syncthing.Syncthing) error {
-	suffix := "Synchronizing your files..."
-	spinner := utils.NewSpinner(suffix)
-	pbScaling := 0.30
-	spinner.Start()
-	defer spinner.Stop()
-
-	stop := make(chan os.Signal, 1)
-	signal.Notify(stop, os.Interrupt)
-	exit := make(chan error, 1)
-
-	go func() {
-		ticker := time.NewTicker(1000 * time.Millisecond)
-		for {
-			<-ticker.C
-			message := ""
-			progress, err := status.Run(ctx, sy)
-			if err != nil {
-				oktetoLog.Infof("error accessing status: %s", err)
-				continue
-			}
-			if progress == 100 {
-				message = "Files synchronized"
-			} else {
-				message = utils.RenderProgressBar(suffix, progress, pbScaling)
-			}
-			spinner.Update(message)
-		}
-	}()
-
-	select {
-	case <-stop:
-		oktetoLog.Infof("CTRL+C received, starting shutdown sequence")
-		spinner.Stop()
-		return oktetoErrors.ErrIntSig
-	case err := <-exit:
-		if err != nil {
-			oktetoLog.Infof("exit signal received due to error: %s", err)
-			return err
-		}
-	}
-	return nil
-}
-
-func runWithoutWatch(ctx context.Context, sy *syncthing.Syncthing) error {
+func isSynchronized(ctx context.Context, sy *syncthing.Syncthing) bool {
 	progress, err := status.Run(ctx, sy)
 	if err != nil {
-		return err
+		return false
 	}
 	if progress == 100 {
-		oktetoLog.Success("Synchronization status: %.2f%%", progress)
-	} else {
-		oktetoLog.Yellow("Synchronization status: %.2f%%", progress)
+		return true
 	}
-	return nil
+	return false
 }

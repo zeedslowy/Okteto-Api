@@ -50,7 +50,7 @@ const (
 	//Pulling  up pulling images
 	Pulling = "activating"
 	//Start ingSync up preparing syncthing
-	StartingSync = "synchronizing"
+	StartingSync = "activating"
 	//Synchronize ing up is syncthing
 	Synchronizing = "synchronizing"
 	//Ready up fi nished
