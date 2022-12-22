@@ -338,26 +338,6 @@ workflows:
               ignore: *release-branch-regex
             tags:
               ignore: /.*/
-      - run-unit-test:
-          filters:
-            branches:
-              ignore: *release-branch-regex
-            tags:
-              ignore: /.*/
-      - run-windows-unit-test:
-          filters:
-            branches:
-              ignore: *release-branch-regex
-            tags:
-              ignore: /.*/
-      - run-windows-e2e-test:
-          requires:
-            - build-binaries
-          filters:
-            branches:
-              only:
-                - master
-                - /.*(windows|win)/
       - test-integration:
           requires:
             - build-binaries
@@ -366,23 +346,6 @@ workflows:
               only:
                 - master
                 - /.*(e2e)/
-      - test-release:
-          context: GKE
-          requires:
-            - build-binaries
-          filters:
-            tags:
-              ignore: /.*/
-            branches:
-              ignore:
-                - master
-                - *release-branch-regex
-      - push-image-latest:
-          requires:
-            - build-binaries
-          filters:
-            branches:
-              only: master
 
   release-branch:
     jobs:
