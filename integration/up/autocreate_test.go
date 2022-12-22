@@ -87,16 +87,16 @@ dev:
     autocreate: true
 `
 
-	/*autocreateManifestV1WithDefinedUser = `
-	name: test
-	image: okteto.dev/test:latest
-	command: echo done
-	autocreate: true
-	persistentVolume:
-	  enabled: false
-	sync:
-	- .:/app
-	`*/
+	autocreateManifestV1WithDefinedUser = `
+name:
+image: okteto.dev/test:latest
+command: echo done
+autocreate: true
+persistentVolume:
+  enabled: false
+sync:
+- .:/app
+`
 
 	autocreateManifestV2WithDefinedUser = `
 build:
@@ -387,14 +387,14 @@ func TestUpAutocreateV2WithBuild(t *testing.T) {
 	require.True(t, commands.HasUpCommandFinished(upResult.Pid.Pid))
 }
 
-/*func TestUpWithDefinedUserAndBuildV1(t *testing.T) {
+func TestUpWithDefinedUserAndBuildV1(t *testing.T) {
 	t.Parallel()
 	// Prepare environment
 	dir := t.TempDir()
 	oktetoPath, err := integration.GetOktetoPath()
 	require.NoError(t, err)
 
-	testNamespace := integration.GetTestNamespace("TestUpWithDefinedUserAndBuildV1", user)
+	testNamespace := integration.GetTestNamespace("TestUpWithDefinedUserV1", user)
 	namespaceOpts := &commands.NamespaceOptions{
 		Namespace:  testNamespace,
 		OktetoHome: dir,
@@ -410,7 +410,7 @@ func TestUpAutocreateV2WithBuild(t *testing.T) {
 	require.NoError(t, writeFile(filepath.Join(dir, ".dockerignore"), stignoreContent))
 
 	upOptions := &commands.UpOptions{
-		Name:         "test",
+		Name:         "autocreate",
 		Namespace:    testNamespace,
 		Workdir:      dir,
 		ManifestPath: filepath.Join(dir, "okteto.yml"),
@@ -419,7 +419,7 @@ func TestUpAutocreateV2WithBuild(t *testing.T) {
 	}
 	_, err = commands.RunOktetoUp(oktetoPath, upOptions)
 	require.NoError(t, err)
-}*/
+}
 
 func TestUpWithDefinedUserV2(t *testing.T) {
 	t.Parallel()
