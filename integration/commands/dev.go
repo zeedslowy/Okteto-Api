@@ -88,7 +88,7 @@ func RunOktetoUp(oktetoPath string, upOptions *UpOptions) (*UpCommandProcessResu
 }
 
 func getUpCmd(oktetoPath string, upOptions *UpOptions) *exec.Cmd {
-	cmd := exec.Command(oktetoPath, "up")
+	cmd := exec.Command(oktetoPath, "up", "--log-level=debug")
 	cmd.Env = os.Environ()
 	if upOptions.ManifestPath != "" {
 		cmd.Args = append(cmd.Args, "-f", upOptions.ManifestPath)
