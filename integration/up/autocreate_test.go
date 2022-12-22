@@ -87,16 +87,16 @@ dev:
     autocreate: true
 `
 
-	autocreateManifestV1WithDefinedUser = `
-name: test
-image: okteto.dev/test:latest
-command: echo done
-autocreate: true
-persistentVolume:
-  enabled: false
-sync:
-- .:/app
-`
+	/*autocreateManifestV1WithDefinedUser = `
+	name: test
+	image: okteto.dev/test:latest
+	command: echo done
+	autocreate: true
+	persistentVolume:
+	  enabled: false
+	sync:
+	- .:/app
+	`*/
 
 	autocreateManifestV2WithDefinedUser = `
 build:
@@ -387,7 +387,7 @@ func TestUpAutocreateV2WithBuild(t *testing.T) {
 	require.True(t, commands.HasUpCommandFinished(upResult.Pid.Pid))
 }
 
-func TestUpWithDefinedUserAndBuildV1(t *testing.T) {
+/*func TestUpWithDefinedUserAndBuildV1(t *testing.T) {
 	t.Parallel()
 	// Prepare environment
 	dir := t.TempDir()
@@ -419,16 +419,16 @@ func TestUpWithDefinedUserAndBuildV1(t *testing.T) {
 	}
 	_, err = commands.RunOktetoUp(oktetoPath, upOptions)
 	require.NoError(t, err)
-}
+}*/
 
-func TestUpWithDefinedUserAndBuildV2(t *testing.T) {
+func TestUpWithDefinedUserV2(t *testing.T) {
 	t.Parallel()
 	// Prepare environment
 	dir := t.TempDir()
 	oktetoPath, err := integration.GetOktetoPath()
 	require.NoError(t, err)
 
-	testNamespace := integration.GetTestNamespace("TestUpWithDefinedUserAndBuildV2", user)
+	testNamespace := integration.GetTestNamespace("TestUpWithDefinedUserV2", user)
 	namespaceOpts := &commands.NamespaceOptions{
 		Namespace:  testNamespace,
 		OktetoHome: dir,
