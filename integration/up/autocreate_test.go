@@ -88,7 +88,7 @@ dev:
 `
 
 	autocreateManifestV1WithDefinedUser = `
-name:
+name: autocreate
 image: okteto.dev/test:latest
 command: echo done
 autocreate: true
