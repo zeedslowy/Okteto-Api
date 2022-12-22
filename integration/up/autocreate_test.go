@@ -100,11 +100,11 @@ dev:
 
 	autocreateManifestV2WithDefinedUser = `
 build:
-  test:
+  autocreate:
     context: .
 dev:
-  test:
-    image: ${OKTETO_BUILD_TEST_IMAGE}
+  autocreate:
+    image: ${OKTETO_BUILD_AUTOCREATE_IMAGE}
     command:
     - echo
     - done
@@ -444,7 +444,7 @@ func TestUpWithDefinedUserV2(t *testing.T) {
 	require.NoError(t, writeFile(filepath.Join(dir, ".dockerignore"), stignoreContent))
 
 	upOptions := &commands.UpOptions{
-		Name:         "test",
+		Name:         "autocreate",
 		Namespace:    testNamespace,
 		Workdir:      dir,
 		ManifestPath: filepath.Join(dir, "okteto.yml"),
