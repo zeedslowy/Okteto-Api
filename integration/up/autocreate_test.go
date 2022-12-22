@@ -387,7 +387,7 @@ func TestUpAutocreateV2WithBuild(t *testing.T) {
 	require.True(t, commands.HasUpCommandFinished(upResult.Pid.Pid))
 }
 
-/*func TestUpWithDefinedUserAndBuildV1(t *testing.T) {
+func TestUpWithDefinedUserAndBuildV1(t *testing.T) {
 	t.Parallel()
 	// Prepare environment
 	dir := t.TempDir()
@@ -419,7 +419,7 @@ func TestUpAutocreateV2WithBuild(t *testing.T) {
 	}
 	_, err = commands.RunOktetoUp(oktetoPath, upOptions)
 	require.NoError(t, err)
-}*/
+}
 
 func TestUpWithDefinedUserV2(t *testing.T) {
 	t.Parallel()
