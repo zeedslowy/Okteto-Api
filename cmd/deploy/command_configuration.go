@@ -144,11 +144,9 @@ func addEnvVars(ctx context.Context, cwd string) {
 			oktetoLog.Infof("could not retrieve sha: %s", err)
 		}
 		isClean := true
-		if !deployRemote {
-			isClean, err = utils.IsCleanDirectory(ctx, cwd)
-			if err != nil {
-				oktetoLog.Infof("could not status: %s", err)
-			}
+		isClean, err = utils.IsCleanDirectory(ctx, cwd)
+		if err != nil {
+			oktetoLog.Infof("could not status: %s", err)
 		}
 		if !isClean {
 			sha = utils.GetRandomSHA()

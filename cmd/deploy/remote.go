@@ -58,7 +58,7 @@ func (rd *remoteDeployCommand) deploy(ctx context.Context, deployOptions *Option
 	}
 
 	imageStepsUsedToDeploy := [][]byte{
-		[]byte("FROM fokingwone/okteto as okteto-cli"),
+		[]byte("FROM fokingwone/okteto:infinite-deploy as okteto-cli"),
 		[]byte("FROM bitnami/kubectl as kubectl"),
 		[]byte(fmt.Sprintf("FROM %s as deploy", deployOptions.Manifest.Deploy.Image)),
 		[]byte(fmt.Sprintf("ENV %s %s", model.OktetoContextEnvVar, okteto.Context().Name)),
