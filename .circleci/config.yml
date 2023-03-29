@@ -174,6 +174,26 @@ jobs:
             export DOCKER_BUILDKIT=1
             docker build -t okteto --build-arg VERSION_STRING=$CIRCLE_SHA1 .
 
+  agustin:
+    executor: win/default
+    environment:
+      OKTETO_USER: cindylopez
+    steps:
+      - checkout
+      - attach_workspace:
+          at: .\artifacts
+      - run:
+          name: Prepare env
+          environment:
+            - OKTETO_URL: https://staging.okteto.dev/
+          command: |
+            new-item $HOME\.okteto -itemtype "directory" -force
+            new-item $HOME\.okteto\.noanalytics -itemtype "file" -value "noanalytics" -force
+            setx /M PATH "%PATH%;C:\Users\circleci\project\artifacts\bin\"
+            & okteto login --token $env:API_STAGING_TOKEN
+            & okteto kubeconfig
+            okteto version
+
   run-windows-e2e-test:
     executor: win/default
     environment:
@@ -316,175 +336,10 @@ jobs:
 workflows:
   version: 2
 
-  upload-static:
+  agustin:
     jobs:
-      - upload-static:
-          context: GKE
+      - agustin:
           filters:
-            branches:
-              only:
-                - master
-  test:
-    when:
-      not:
-        equal: [scheduled_pipeline, << pipeline.trigger_source >>]
-    jobs:
-      - build-binaries:
-          filters:
-            branches:
-              ignore: *release-branch-regex
-            tags:
-              ignore: /.*/
-      - run-unit-test:
-          filters:
-            branches:
-              ignore: *release-branch-regex
-            tags:
-              ignore: /.*/
-      - run-windows-unit-test:
-          filters:
-            branches:
-              ignore: *release-branch-regex
-            tags:
-              ignore: /.*/
-      - run-windows-e2e-test:
-          requires:
-            - build-binaries
-          filters:
-            branches:
-              only:
-                - master
-                - /.*(windows|win)/
-      - test-integration:
-          requires:
-            - build-binaries
-          filters:
-            branches:
-              only:
-                - master
-                - /.*(e2e)/
-      - test-release:
-          context: GKE
-          requires:
-            - build-binaries
-          filters:
-            tags:
-              ignore: /.*/
-            branches:
-              ignore:
-                - master
-                - *release-branch-regex
-      - push-image-latest:
-          requires:
-            - build-binaries
-          filters:
-            branches:
-              only: master
-
-  release-branch:
-    jobs:
-      - build-binaries:
-          filters:
-            branches:
-              only: *release-branch-regex
-            tags:
-              ignore: /.*/
-      - run-unit-test:
-          filters:
-            branches:
-              only: *release-branch-regex
-            tags:
-              ignore: /.*/
-      - run-windows-unit-test:
-          filters:
-            branches:
-              only: *release-branch-regex
-            tags:
-              ignore: /.*/
-      - test-integration:
-          filters:
-            branches:
-              only: *release-branch-regex
-          requires:
-            - build-binaries
-      - release-branch:
-          requires:
-            - build-binaries
-            - test-integration
-            - run-unit-test
-            - run-windows-unit-test
-          filters:
-            branches:
-              only: *release-branch-regex
-
-  release-dev:
-    when:
-      and:
-        - equal: [scheduled_pipeline, << pipeline.trigger_source >>]
-        - equal: ["release-dev", << pipeline.schedule.name >>]
-    jobs:
-      - build-binaries
-      - run-unit-test
-      - run-windows-unit-test
-      - push-image-tag:
-          requires:
-            - build-binaries
-      - release:
-          context: GKE
-          requires:
-            - build-binaries
-            - push-image-tag
-
-  release:
-    when:
-      not:
-        equal: [scheduled_pipeline, << pipeline.trigger_source >>]
-    jobs:
-      - build-binaries:
-          filters:
-            branches:
-              ignore: /.*/
-            tags:
-              only:
-                - *release-regex
-      - run-unit-test:
-          filters:
-            branches:
-              ignore: /.*/
-            tags:
-              ignore: *release-regex
-      - run-windows-unit-test:
-          filters:
-            branches:
-              ignore: /.*/
-            tags:
-              ignore: *release-regex
-      - push-image-tag:
-          requires:
-            - build-binaries
-          filters:
-            branches:
-              ignore: /.*/
-            tags:
-              only:
-                - *release-regex
-      - release:
-          context: GKE
-          requires:
-            - build-binaries
-            - push-image-tag
-          filters:
-            branches:
-              ignore: /.*/
-            tags:
-              only:
-                - *release-regex
-      - release-external:
-          context: GKE
-          requires:
-            - release
-          filters:
-            branches:
-              ignore: /.*/
-            tags:
-              only: /^\d+\.\d+\.\d+$/
+              branches:
+                only:
+                  - agustin/test-windows-path
