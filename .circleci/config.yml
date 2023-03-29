@@ -35,7 +35,7 @@ commands:
           name: Run up integration tests
           command: make integration-up
           environment:
-            OKTETO_SKIP_CLEANUP: 'true'
+            OKTETO_SKIP_CLEANUP: "true"
 
   integration-okteto:
     steps:
@@ -237,7 +237,7 @@ jobs:
           name: Run deprecated integration tests
           environment:
             - OKTETO_URL: https://staging.okteto.dev/
-            - OKTETO_SKIP_CLEANUP: 'true'
+            - OKTETO_SKIP_CLEANUP: "true"
             - OKTETO_APPS_SUBDOMAIN: staging.okteto.net
           command: |
             go test github.com/okteto/okteto/integration/deprecated/push -tags="integration" --count=1 -v -timeout 15m
@@ -246,21 +246,21 @@ jobs:
           name: Run build integration tests
           environment:
             - OKTETO_URL: https://staging.okteto.dev/
-            - OKTETO_SKIP_CLEANUP: 'true'
+            - OKTETO_SKIP_CLEANUP: "true"
             - OKTETO_APPS_SUBDOMAIN: staging.okteto.net
           command: go test github.com/okteto/okteto/integration/build -tags="integration" --count=1 -v -timeout 10m
       - run:
           name: Run deploy integration tests
           environment:
             - OKTETO_URL: https://staging.okteto.dev/
-            - OKTETO_SKIP_CLEANUP: 'true'
+            - OKTETO_SKIP_CLEANUP: "true"
             - OKTETO_APPS_SUBDOMAIN: staging.okteto.net
           command: go test github.com/okteto/okteto/integration/deploy -tags="integration" --count=1 -v -timeout 20m
       - run:
           name: Run up integration tests
           environment:
             - OKTETO_URL: https://staging.okteto.dev/
-            - OKTETO_SKIP_CLEANUP: 'true'
+            - OKTETO_SKIP_CLEANUP: "true"
             - OKTETO_APPS_SUBDOMAIN: staging.okteto.net
           command: go test github.com/okteto/okteto/integration/up -tags="integration" --count=1 -v -timeout 45m
       - store_artifacts:
@@ -335,7 +335,6 @@ jobs:
             - a1:66:22:e1:67:66:fb:d6:3b:a2:7a:6c:d9:9a:46:ba
       - run: ./scripts/ci/release-branch.sh
 
-
 workflows:
   version: 2
 
@@ -343,6 +342,13 @@ workflows:
     jobs:
       - agustin:
           filters:
-              branches:
-                only:
-                  - agustin/test-windows-path
+            branches:
+              only:
+                - agustin/test-windows-path
+          requires:
+            - build-binaries
+      - build-binaries:
+          filters:
+            branches:
+              only:
+                - agustin/test-windows-path
