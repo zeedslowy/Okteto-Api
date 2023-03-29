@@ -189,6 +189,7 @@ jobs:
           command: |
             new-item $HOME\.okteto -itemtype "directory" -force
             new-item $HOME\.okteto\.noanalytics -itemtype "file" -value "noanalytics" -force
+            echo %PATH%
             copy C:\Users\circleci\project\artifacts\bin\okteto.exe C:\Go\bin\okteto.exe
             & okteto login --token $env:API_STAGING_TOKEN
             & okteto kubeconfig
@@ -198,6 +199,7 @@ jobs:
       - run:
           name: Okteto version
           command: |
+            echo %PATH%
             okteto version
 
   run-windows-e2e-test:
