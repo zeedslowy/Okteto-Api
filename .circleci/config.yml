@@ -189,16 +189,12 @@ jobs:
           command: |
             new-item $HOME\.okteto -itemtype "directory" -force
             new-item $HOME\.okteto\.noanalytics -itemtype "file" -value "noanalytics" -force
-            # $env:PATH
-            # dir C:\Users\circleci\project\artifacts\bin\
-            # set "PATH=C:\Users\circleci\project\artifacts\bin\;%PATH%"
-            # setx /M PATH "C:\Users\circleci\project\artifacts\bin\;%PATH%"
-            # PATH C:\Users\circleci\project\artifacts\bin\;%PATH%
-            # reg.exe ADD "HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Control\Session Manager\Environment" /v Path /t REG_EXPAND_SZ /d "C:\Users\circleci\project\artifacts\bin\;%PATH%" /f
-            # $env:PATH
             copy C:\Users\circleci\project\artifacts\bin\okteto.exe C:\Go\bin\okteto.exe
             & okteto login --token $env:API_STAGING_TOKEN
             & okteto kubeconfig
+      - run:
+          name: Okteto version
+          command: |
             okteto version
 
   run-windows-e2e-test:
