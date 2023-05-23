@@ -299,6 +299,7 @@ func AddDevAnnotations(ctx context.Context, manifest *model.Manifest, c kubernet
 		if err := app.PatchAnnotations(ctx, c); err != nil {
 			oktetoLog.Infof("could not add %s dev annotations due to: %s", devName, err.Error())
 		}
+		oktetoLog.Information(fmt.Sprintf("AddDevAnnotations: patched dev '%s' with dev annotations", dev.Name))
 	}
 }
 

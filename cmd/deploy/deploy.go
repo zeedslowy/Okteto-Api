@@ -386,14 +386,18 @@ func (dc *DeployCommand) RunDeploy(ctx context.Context, deployOptions *Options) 
 					oktetoLog.Information("Run 'okteto up' to activate your development container")
 				}
 			}
+			oktetoLog.Information("AddDevAnnotations: Adding dev annotations...")
 			pipeline.AddDevAnnotations(ctx, deployOptions.Manifest, c)
+			oktetoLog.Information("AddDevAnnotations: Added dev annotations.")
 		}
 		data.Status = pipeline.DeployedStatus
 	}
 
+	oktetoLog.Information("updateConfigMap: updating dev config map")
 	if err := dc.CfgMapHandler.updateConfigMap(ctx, cfg, data, err); err != nil {
 		return err
 	}
+	oktetoLog.Information("updateConfigMap: updated dev config map")
 
 	return err
 }
