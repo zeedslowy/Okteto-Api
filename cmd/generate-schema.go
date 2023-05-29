@@ -33,18 +33,16 @@ func GenerateSchema() *cobra.Command {
 		Use:    "generate-schema",
 		Short:  "Generates the json schema for the okteto manifest",
 		RunE: func(cmd *cobra.Command, args []string) error {
-			return generateJsonSchema(output)
+			schema := GenerateJsonSchema()
+			err := SaveSchema(schema, output)
+
+			return err
 		},
 	}
 
 	cmd.Flags().StringVarP(&output, "output", "o", "", "Path to the file where the json schema will be stored")
 	return cmd
 }
-
-//
-//type Dev struct {
-//	Dev map[string]model.Dev `json:"dev"`
-//}
 
 type Manifest struct {
 	Build     map[string]model.BuildInfo `json:"build" jsonschema:""`
@@ -59,7 +57,7 @@ type Manifest struct {
 	// TODO: make sure all are covered: https://www.okteto.com/docs/reference/manifest/#example
 }
 
-func generateJsonSchema(output string) error {
+func GenerateJsonSchema() *jsonschema.Schema {
 	r := new(jsonschema.Reflector)
 	r.DoNotReference = true
 	r.Anonymous = true
@@ -68,22 +66,21 @@ func generateJsonSchema(output string) error {
 	schema.ID = "https://okteto.com/schemas/okteto-manifest.json"
 	schema.Title = "Okteto Manifest"
 	schema.Required = []string{""}
-	//schema.Properties
 
+	return schema
+}
+
+func SaveSchema(schema *jsonschema.Schema, outputFilePath string) error {
 	schemaBytes, err := json.MarshalIndent(schema, "", "  ")
 	if err != nil {
 		return err
 	}
 
-	if output != "" {
-		err := os.WriteFile(output, schemaBytes, 0644)
-		if err != nil {
-			return err
-		}
-		oktetoLog.Success("okteto json schema has been generated and stored in %s", output)
-	} else {
-		oktetoLog.Success("okteto json schema has been generated")
+	err = os.WriteFile(outputFilePath, schemaBytes, 0644)
+	if err != nil {
+		return err
 	}
+	oktetoLog.Success("okteto json schema has been generated and stored in %s", output)
 
 	return nil
 }
