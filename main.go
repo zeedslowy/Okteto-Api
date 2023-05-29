@@ -120,6 +120,7 @@ func main() {
 
 	root.AddCommand(cmd.Analytics())
 	root.AddCommand(cmd.Version())
+	root.AddCommand(cmd.GenerateSchema())
 	root.AddCommand(cmd.Login())
 	root.AddCommand(contextCMD.Context())
 	root.AddCommand(cmd.Kubeconfig())

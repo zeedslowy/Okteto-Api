@@ -122,17 +122,17 @@ type Args struct {
 
 // BuildInfo represents the build info to generate an image
 type BuildInfo struct {
-	Name             string            `yaml:"name,omitempty"`
-	Context          string            `yaml:"context,omitempty"`
-	Dockerfile       string            `yaml:"dockerfile,omitempty"`
-	CacheFrom        cache.CacheFrom   `yaml:"cache_from,omitempty"`
-	Target           string            `yaml:"target,omitempty"`
-	Args             BuildArgs         `yaml:"args,omitempty"`
-	Image            string            `yaml:"image,omitempty"`
+	Name             string            `yaml:"name,omitempty" json:"name,omitempty"`
+	Context          string            `yaml:"context,omitempty" json:"context,omitempty"`
+	Dockerfile       string            `yaml:"dockerfile,omitempty" json:"dockerfile,omitempty"`
+	CacheFrom        cache.CacheFrom   `yaml:"cache_from,omitempty" json:"cache_from,omitempty"`
+	Target           string            `yaml:"target,omitempty" json:"target,omitempty"`
+	Args             BuildArgs         `yaml:"args,omitempty" json:"args,omitempty"`
+	Image            string            `yaml:"image,omitempty" json:"image,omitempty"`
 	VolumesToInclude []StackVolume     `yaml:"-"`
-	ExportCache      cache.ExportCache `yaml:"export_cache,omitempty"`
-	DependsOn        BuildDependsOn    `yaml:"depends_on,omitempty"`
-	Secrets          BuildSecrets      `yaml:"secrets,omitempty"`
+	ExportCache      cache.ExportCache `yaml:"export_cache,omitempty" json:"export_cache"`
+	DependsOn        BuildDependsOn    `yaml:"depends_on,omitempty" json:"depends_on"`
+	Secrets          BuildSecrets      `yaml:"secrets,omitempty" json:"secrets"`
 }
 
 // BuildArg is an argument used on the build step.
