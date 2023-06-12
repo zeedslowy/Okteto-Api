@@ -19,6 +19,7 @@ import (
 	oktetoLog "github.com/okteto/okteto/pkg/log"
 	"github.com/okteto/okteto/pkg/model"
 	"github.com/okteto/okteto/pkg/okteto"
+	"github.com/okteto/okteto/pkg/types"
 	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/apimachinery/pkg/selection"
 )
@@ -65,14 +66,6 @@ func (ld *localDestroyCommand) runDestroy(ctx context.Context, opts *Options) er
 		return err
 	}
 
-	for _, variable := range opts.Variables {
-		value := strings.SplitN(variable, "=", 2)[1]
-		if strings.TrimSpace(value) != "" {
-			oktetoLog.AddMaskedWord(value)
-		}
-	}
-	oktetoLog.EnableMasking()
-
 	namespace := opts.Namespace
 	if namespace == "" {
 		namespace = okteto.Context().Namespace
@@ -80,13 +73,28 @@ func (ld *localDestroyCommand) runDestroy(ctx context.Context, opts *Options) er
 
 	oktetoLog.AddToBuffer(oktetoLog.InfoLevel, "Destroying...")
 
+	cfgVariablesString, err := ld.ConfigMapHandler.getConfigmapVariablesEncoded(ctx, opts.Name, namespace)
+	if err != nil {
+		return err
+	}
+
+	cfgVariables := types.DecodeStringToDeployVariable(cfgVariablesString)
+	for _, variable := range cfgVariables {
+		opts.Variables = append(opts.Variables, fmt.Sprintf("%s=%s", variable.Name, variable.Value))
+		if strings.TrimSpace(variable.Value) != "" {
+			oktetoLog.AddMaskedWord(variable.Value)
+		}
+	}
+	oktetoLog.EnableMasking()
+
+	// update to change status
 	data := &pipeline.CfgData{
 		Name:      opts.Name,
 		Namespace: namespace,
 		Status:    pipeline.DestroyingStatus,
 		Filename:  opts.ManifestPathFlag,
+		Variables: opts.Variables,
 	}
-
 	cfg, err := ld.ConfigMapHandler.translateConfigMapAndDeploy(ctx, data)
 	if err != nil {
 		return err

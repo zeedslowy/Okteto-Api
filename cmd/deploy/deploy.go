@@ -27,6 +27,7 @@ import (
 	"github.com/okteto/okteto/cmd/utils"
 	"github.com/okteto/okteto/pkg/analytics"
 	"github.com/okteto/okteto/pkg/cmd/pipeline"
+	"github.com/okteto/okteto/pkg/config"
 	"github.com/okteto/okteto/pkg/constants"
 	"github.com/okteto/okteto/pkg/divert"
 	oktetoErrors "github.com/okteto/okteto/pkg/errors"
@@ -53,7 +54,7 @@ type Options struct {
 	// ManifestPathFlag is the option -f as introduced by the user when executing this command.
 	// This is stored at the configmap as filename to redeploy from the ui.
 	ManifestPathFlag string
-	// ManifestPath is the patah to the manifest used though the command execution.
+	// ManifestPath is the path to the manifest used though the command execution.
 	// This might change its value during execution
 	ManifestPath     string
 	Name             string
@@ -77,8 +78,7 @@ type Options struct {
 
 // DeployCommand defines the config for deploying an app
 type DeployCommand struct {
-	GetManifest func(path string) (*model.Manifest, error)
-
+	GetManifest        func(path string) (*model.Manifest, error)
 	TempKubeconfigFile string
 	K8sClientProvider  okteto.K8sClientProvider
 	Builder            *buildv2.OktetoBuilder
@@ -91,8 +91,9 @@ type DeployCommand struct {
 	DivertDriver       divert.Driver
 	PipelineCMD        pipelineCMD.PipelineDeployerInterface
 
-	PipelineType model.Archetype
-	isRemote     bool
+	PipelineType       model.Archetype
+	isRemote           bool
+	runningInInstaller bool
 }
 
 type ExternalResourceInterface interface {
@@ -197,6 +198,7 @@ func Deploy(ctx context.Context) *cobra.Command {
 				CfgMapHandler:      NewConfigmapHandler(k8sClientProvider),
 				Fs:                 afero.NewOsFs(),
 				PipelineCMD:        pc,
+				runningInInstaller: config.RunningInInstaller(),
 			}
 			startTime := time.Now()
 
@@ -306,6 +308,19 @@ func (dc *DeployCommand) RunDeploy(ctx context.Context, deployOptions *Options) 
 		return err
 	}
 
+	if dc.isRemote || dc.runningInInstaller {
+		currentVars, err := dc.CfgMapHandler.getConfigmapVariablesEncoded(ctx, deployOptions.Name, deployOptions.Manifest.Namespace)
+		if err != nil {
+			return err
+		}
+
+		// when running in remote or installer variables should be retrieved from the saved value at configmap
+		deployOptions.Variables = []string{}
+		for _, v := range types.DecodeStringToDeployVariable(currentVars) {
+			deployOptions.Variables = append(deployOptions.Variables, fmt.Sprintf("%s=%s", v.Name, v.Value))
+		}
+	}
+
 	data := &pipeline.CfgData{
 		Name:       deployOptions.Name,
 		Namespace:  deployOptions.Manifest.Namespace,
@@ -315,6 +330,7 @@ func (dc *DeployCommand) RunDeploy(ctx context.Context, deployOptions *Options) 
 		Status:     pipeline.ProgressingStatus,
 		Manifest:   deployOptions.Manifest.Manifest,
 		Icon:       deployOptions.Manifest.Icon,
+		Variables:  deployOptions.Variables,
 	}
 
 	if !deployOptions.Manifest.IsV2 && deployOptions.Manifest.Type == model.StackType && deployOptions.Manifest.Deploy != nil {

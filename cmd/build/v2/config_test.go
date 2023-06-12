@@ -173,7 +173,7 @@ func TestGetGitCommit(t *testing.T) {
 func TestGetTextToHash(t *testing.T) {
 	fs := afero.NewMemMapFs()
 	afero.WriteFile(fs, "secret", []byte("bar"), 0600)
-
+	t.Setenv("BAR", "bar")
 	type input struct {
 		repo      fakeConfigRepo
 		buildInfo *model.BuildInfo
@@ -211,7 +211,7 @@ func TestGetTextToHash(t *testing.T) {
 					Image:      "image",
 				},
 			},
-			expected: "commit:1234567890;target:target;build_args:foo=bar;key=value;secrets:secret=bar;context:context;dockerfile:dockerfile;image:image;",
+			expected: "commit:1234567890;target:target;build_args:foo=bar;key=value;secrets:secret=secret;context:context;dockerfile:dockerfile;image:image;",
 		},
 		{
 			name: "invalid commit",
@@ -241,7 +241,7 @@ func TestGetTextToHash(t *testing.T) {
 					Image:      "image",
 				},
 			},
-			expected: "commit:;target:target;build_args:foo=bar;key=value;secrets:secret=bar;context:context;dockerfile:dockerfile;image:image;",
+			expected: "commit:;target:target;build_args:foo=bar;key=value;secrets:secret=secret;context:context;dockerfile:dockerfile;image:image;",
 		},
 		{
 			name: "invalid commit and no args",
@@ -262,7 +262,33 @@ func TestGetTextToHash(t *testing.T) {
 					Image:      "image",
 				},
 			},
-			expected: "commit:;target:target;build_args:;secrets:secret=bar;context:context;dockerfile:dockerfile;image:image;",
+			expected: "commit:;target:target;build_args:;secrets:secret=secret;context:context;dockerfile:dockerfile;image:image;",
+		},
+		{
+			name: "arg with expansion",
+			input: input{
+				repo: fakeConfigRepo{
+					sha:     "",
+					isClean: true,
+					err:     assert.AnError,
+				},
+				buildInfo: &model.BuildInfo{
+					Args: model.BuildArgs{
+						{
+							Name:  "foo",
+							Value: "$BAR",
+						},
+					},
+					Target: "target",
+					Secrets: model.BuildSecrets{
+						"secret": "secret",
+					},
+					Context:    "context",
+					Dockerfile: "dockerfile",
+					Image:      "image",
+				},
+			},
+			expected: "commit:;target:target;build_args:foo=bar;secrets:secret=secret;context:context;dockerfile:dockerfile;image:image;",
 		},
 	}
 	for _, tc := range tt {
