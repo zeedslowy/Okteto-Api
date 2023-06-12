@@ -83,7 +83,7 @@ type Dev struct {
 	Reverse              []Reverse             `json:"reverse,omitempty" yaml:"reverse,omitempty"`
 	Interface            string                `json:"interface,omitempty" yaml:"interface,omitempty"`
 	Resources            ResourceRequirements  `json:"resources,omitempty" yaml:"resources,omitempty"`
-	Services             []*Dev                `json:"services,omitempty" yaml:"services,omitempty"`
+	Services             []*Dev                `json:"services,omitempty" yaml:"services,omitempty" jsonschema:"title=services,description=List of services"`
 	PersistentVolumeInfo *PersistentVolumeInfo `json:"persistentVolume,omitempty" yaml:"persistentVolume,omitempty"`
 	InitContainer        InitContainer         `json:"initContainer,omitempty" yaml:"initContainer,omitempty"`
 	InitFromImage        bool                  `json:"initFromImage,omitempty" yaml:"initFromImage,omitempty"`
@@ -123,16 +123,16 @@ type Args struct {
 // BuildInfo represents the build info to generate an image
 type BuildInfo struct {
 	Name             string            `yaml:"name,omitempty" json:"name,omitempty"`
-	Context          string            `yaml:"context,omitempty" json:"context,omitempty"`
-	Dockerfile       string            `yaml:"dockerfile,omitempty" json:"dockerfile,omitempty"`
-	CacheFrom        cache.CacheFrom   `yaml:"cache_from,omitempty" json:"cache_from,omitempty"`
-	Target           string            `yaml:"target,omitempty" json:"target,omitempty"`
-	Args             BuildArgs         `yaml:"args,omitempty" json:"args,omitempty"`
-	Image            string            `yaml:"image,omitempty" json:"image,omitempty"`
-	VolumesToInclude []StackVolume     `yaml:"-"`
-	ExportCache      cache.ExportCache `yaml:"export_cache,omitempty" json:"export_cache"`
-	DependsOn        BuildDependsOn    `yaml:"depends_on,omitempty" json:"depends_on"`
-	Secrets          BuildSecrets      `yaml:"secrets,omitempty" json:"secrets"`
+	Context          string            `yaml:"context,omitempty" json:"context,omitempty" jsonschema:"title=context,default=.,description=The build context. Relative paths are relative to the location of the Okteto Manifest (default: .)"`
+	Dockerfile       string            `yaml:"dockerfile,omitempty" json:"dockerfile,omitempty" jsonschema:"title=dockerfile,default=Dockerfile,description=The path to the Dockerfile. It's a relative path to the build context (default: Dockerfile)"`
+	CacheFrom        cache.CacheFrom   `yaml:"cache_from,omitempty" json:"cache_from,omitempty" jsonschema:"title=cache_from,description="`
+	Target           string            `yaml:"target,omitempty" json:"target,omitempty" jsonschema:"title=target,description=Build the specified stage as defined inside the Dockerfile. See the [multi-stage official](https://docs.docker.com/build/building/multi-stage/) <a href='https://docs.docker.com/build/building/multi-stage/'>cliic</a> docs for details: https://docs.docker.com/build/building/multi-stage/"`
+	Args             BuildArgs         `yaml:"args,omitempty" json:"args,omitempty" jsonschema:"title=args,description=Add build arguments, which are environment variables accessible only during the build process. Build arguments with a value containing a $ sign are resolved to the environment variable value on the machine okteto is running on."`
+	Image            string            `yaml:"image,omitempty" json:"image,omitempty" jsonschema:"title=image,description=The name of the image to build and push. In clusters that have Okteto installed, this is optional (if not specified, the Okteto Registry is used)."`
+	VolumesToInclude []StackVolume     `yaml:"-" jsonschema:"-"`
+	ExportCache      cache.ExportCache `yaml:"export_cache,omitempty" json:"export_cache,omitempty" jsonschema:"title=export_cache,description=Image tag for exported cache when build."`
+	DependsOn        BuildDependsOn    `yaml:"depends_on,omitempty" json:"depends_on,omitempty" jsonschema:"title=depends_on,description=List of images that need to be built first."`
+	Secrets          BuildSecrets      `yaml:"secrets,omitempty" json:"secrets,omitempty" jsonschema:"title=secrets,description=List of secrets exposed to the build. The value of each secret refers to a file. Okteto will resolve references containing a $ sign in this fileto the environment variable value on the machine okteto is running on."`
 }
 
 // BuildArg is an argument used on the build step.
