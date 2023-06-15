@@ -50,13 +50,16 @@ commands:
           command: make integration-deprecated
 
 executors:
+  builder:
+    docker:
+      - image: golang:1.20.5-bullseye
   golang-ci:
     docker:
       - image: okteto/golang-ci:1.18.0
 
 jobs:
   build-binaries:
-    executor: golang-ci
+    executor: builder
     resource_class: large
     steps:
       - checkout
