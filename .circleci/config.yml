@@ -77,7 +77,7 @@ jobs:
           path: bin
           destination: binaries
   run-unit-test:
-    executor: golang-ci
+    executor: builder
     steps:
       - checkout
       - run:
@@ -107,7 +107,7 @@ jobs:
       - checkout
       - run:
           name: Upgrade Golang
-          command: choco upgrade golang --version 1.18
+          command: choco upgrade golang --version 1.20
       - restore_cache:
           keys:
             - v5-pkg-cache-windows-1-15-{{ checksum "go.sum" }}
@@ -185,7 +185,7 @@ jobs:
       - checkout
       - run:
           name: Upgrade Golang
-          command: choco upgrade golang --version 1.18
+          command: choco upgrade golang --version 1.20
       - restore_cache:
           keys:
             - v5-pkg-cache-windows-1-15-{{ checksum "go.sum" }}
