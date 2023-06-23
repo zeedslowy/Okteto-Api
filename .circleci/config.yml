@@ -101,9 +101,6 @@ jobs:
       OKTETO_USER: cindylopez
     steps:
       - checkout
-      - run:
-          name: Upgrade Golang
-          command: choco upgrade golang --version 1.20
       - restore_cache:
           keys:
             - v5-pkg-cache-windows-1-15-{{ checksum "go.sum" }}
@@ -179,9 +176,6 @@ jobs:
       OKTETO_USER: cindylopez
     steps:
       - checkout
-      - run:
-          name: Upgrade Golang
-          command: choco upgrade golang --version 1.20
       - restore_cache:
           keys:
             - v5-pkg-cache-windows-1-15-{{ checksum "go.sum" }}
