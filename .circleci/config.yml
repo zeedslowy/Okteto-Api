@@ -187,10 +187,12 @@ jobs:
             go test ./...
       - run:
           name: Upgrade kubectl
-          command: choco install kubernetes-cli -n allowGlobalConfirmation
+          command: |
+            choco install kubernetes-cli -y
       - run:
           name: Upgrade helm
-          command: choco install kubernetes-helm -n allowGlobalConfirmation
+          command: |
+            choco install kubernetes-helm -y
       - attach_workspace:
           at: .\artifacts
       - run:
