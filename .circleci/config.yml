@@ -9,7 +9,7 @@ aliases:
   - &release-branch-regex /^release-\d+\.\d+$/
 version: 2.1
 orbs:
-  win: circleci/windows@2.1.0
+  win: circleci/windows@5.0.0
 commands:
   integration-actions:
     steps:
