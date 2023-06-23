@@ -208,7 +208,7 @@ jobs:
           name: Run deprecated integration tests
           environment:
             - OKTETO_URL: https://staging.okteto.dev/
-            - OKTETO_PATH: "$HOME/project/artifacts/bin/okteto.exe"
+            - OKTETO_PATH: $($HOME)\project\artifacts\bin\okteto.exe
             - OKTETO_SKIP_CLEANUP: 'true'
             - OKTETO_APPS_SUBDOMAIN: staging.okteto.net
           command: |
@@ -218,7 +218,7 @@ jobs:
           name: Run build integration tests
           environment:
             - OKTETO_URL: https://staging.okteto.dev/
-            - OKTETO_PATH: "$HOME/project/artifacts/bin/okteto.exe"
+            - OKTETO_PATH: $($HOME)\project\artifacts\bin\okteto.exe
             - OKTETO_SKIP_CLEANUP: 'true'
             - OKTETO_APPS_SUBDOMAIN: staging.okteto.net
           command: go test github.com/okteto/okteto/integration/build -tags="integration" --count=1 -v -timeout 10m
@@ -226,7 +226,7 @@ jobs:
           name: Run deploy integration tests
           environment:
             - OKTETO_URL: https://staging.okteto.dev/
-            - OKTETO_PATH: "$HOME/project/artifacts/bin/okteto.exe"
+            - OKTETO_PATH: $($HOME)\project\artifacts\bin\okteto.exe
             - OKTETO_SKIP_CLEANUP: 'true'
             - OKTETO_APPS_SUBDOMAIN: staging.okteto.net
           command: go test github.com/okteto/okteto/integration/deploy -tags="integration" --count=1 -v -timeout 20m
@@ -234,7 +234,7 @@ jobs:
           name: Run up integration tests
           environment:
             - OKTETO_URL: https://staging.okteto.dev/
-            - OKTETO_PATH: "$HOME/project/artifacts/bin/okteto.exe"
+            - OKTETO_PATH: $($HOME)\project\artifacts\bin\okteto.exe
             - OKTETO_SKIP_CLEANUP: 'true'
             - OKTETO_APPS_SUBDOMAIN: staging.okteto.net
           command: go test github.com/okteto/okteto/integration/up -tags="integration" --count=1 -v -timeout 45m
