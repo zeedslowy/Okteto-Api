@@ -234,7 +234,7 @@ jobs:
           command: |
             $Env:OKTETO_PATH="$($HOME)\project\artifacts\bin\okteto.exe"
             $Env:OKTETO_PATH
-            go test github.com/okteto/okteto/integration/deploy -tags="integration" --count=1 -v -timeout 20m
+            go test github.com/okteto/okteto/integration/deploy -tags="integration" --count=1 -p 1 -v -timeout 20m
       - run:
           environment:
             - OKTETO_URL: https://staging.okteto.dev/
