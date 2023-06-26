@@ -206,8 +206,8 @@ jobs:
             new-item $HOME\.okteto\.noanalytics -itemtype "file" -value "noanalytics" -force
             & "$($HOME)\project\artifacts\bin\okteto.exe" login --token $env:API_STAGING_TOKEN
             & "$($HOME)\project\artifacts\bin\okteto.exe" kubeconfig
-            OKTETO_PATH = $HOME\project\artifacts\bin\okteto.exe
-            echo $OKTETO_PATH
+            $Env:OKTETO_PATH="$($HOME)\project\artifacts\bin\okteto.exe"
+            $Env:OKTETO_PATH
       - run:
           name: Run deprecated integration tests
           command: |
