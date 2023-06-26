@@ -197,31 +197,52 @@ jobs:
           at: .\artifacts
       - run:
           name: Prepare env
-          environment:
-            - OKTETO_URL: https://staging.okteto.dev/
-            - OKTETO_SKIP_CLEANUP: 'true'
-            - OKTETO_APPS_SUBDOMAIN: staging.okteto.net
           command: |
             new-item $HOME\.okteto -itemtype "directory" -force
             new-item $HOME\.okteto\.noanalytics -itemtype "file" -value "noanalytics" -force
             & "$($HOME)\project\artifacts\bin\okteto.exe" login --token $env:API_STAGING_TOKEN
             & "$($HOME)\project\artifacts\bin\okteto.exe" kubeconfig
-            $Env:OKTETO_PATH="$($HOME)\project\artifacts\bin\okteto.exe"
-            $Env:OKTETO_PATH
       - run:
+          environment:
+            - OKTETO_URL: https://staging.okteto.dev/
+            - OKTETO_SKIP_CLEANUP: 'true'
+            - OKTETO_APPS_SUBDOMAIN: staging.okteto.net
           name: Run deprecated integration tests
           command: |
+            $Env:OKTETO_PATH="$($HOME)\project\artifacts\bin\okteto.exe"
+            $Env:OKTETO_PATH
             go test github.com/okteto/okteto/integration/deprecated/push -tags="integration" --count=1 -v -timeout 15m
             go test github.com/okteto/okteto/integration/deprecated/stack -tags="integration" --count=1 -v -timeout 15m
       - run:
+          environment:
+            - OKTETO_URL: https://staging.okteto.dev/
+            - OKTETO_SKIP_CLEANUP: 'true'
+            - OKTETO_APPS_SUBDOMAIN: staging.okteto.net
           name: Run build integration tests
-          command: go test github.com/okteto/okteto/integration/build -tags="integration" --count=1 -v -timeout 10m
+          command: |
+            $Env:OKTETO_PATH="$($HOME)\project\artifacts\bin\okteto.exe"
+            $Env:OKTETO_PATH
+            go test github.com/okteto/okteto/integration/build -tags="integration" --count=1 -v -timeout 10m
       - run:
+          environment:
+            - OKTETO_URL: https://staging.okteto.dev/
+            - OKTETO_SKIP_CLEANUP: 'true'
+            - OKTETO_APPS_SUBDOMAIN: staging.okteto.net
           name: Run deploy integration tests
-          command: go test github.com/okteto/okteto/integration/deploy -tags="integration" --count=1 -v -timeout 20m
+          command: |
+            $Env:OKTETO_PATH="$($HOME)\project\artifacts\bin\okteto.exe"
+            $Env:OKTETO_PATH
+            go test github.com/okteto/okteto/integration/deploy -tags="integration" --count=1 -v -timeout 20m
       - run:
+          environment:
+            - OKTETO_URL: https://staging.okteto.dev/
+            - OKTETO_SKIP_CLEANUP: 'true'
+            - OKTETO_APPS_SUBDOMAIN: staging.okteto.net
           name: Run up integration tests
-          command: go test github.com/okteto/okteto/integration/up -tags="integration" --count=1 -v -timeout 45m
+          command: |
+            $Env:OKTETO_PATH="$($HOME)\project\artifacts\bin\okteto.exe"
+            $Env:OKTETO_PATH
+            go test github.com/okteto/okteto/integration/up -tags="integration" --count=1 -v -timeout 45m
       - store_artifacts:
           path: C:\Users\circleci\.okteto
 
