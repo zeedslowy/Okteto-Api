@@ -359,16 +359,20 @@ func (dc *DeployCommand) RunDeploy(ctx context.Context, deployOptions *Options) 
 		return dc.CfgMapHandler.updateConfigMap(ctx, cfg, data, err)
 	}
 
+	fmt.Println("AAAAAAA")
 	if err := dc.recreateFailedPods(ctx, deployOptions.Name); err != nil {
 		oktetoLog.Infof("failed to recreate failed pods: %s", err.Error())
 	}
+	fmt.Println("BBBBB")
 
 	deployer, err := dc.GetDeployer(ctx, deployOptions.Manifest, deployOptions, dc.Builder, dc.CfgMapHandler)
 	if err != nil {
 		return err
 	}
 
+	fmt.Println("CCCC")
 	err = deployer.deploy(ctx, deployOptions)
+	fmt.Println("DDDD")
 	if err != nil {
 		if err == oktetoErrors.ErrIntSig {
 			return nil
@@ -528,7 +532,7 @@ func getDefaultTimeout() time.Duration {
 
 func GetDeployer(ctx context.Context, manifest *model.Manifest, opts *Options, builder *buildv2.OktetoBuilder, cmapHandler configMapHandler) (deployerInterface, error) {
 
-	// isDeployRemote represents wheather the process is comming from a remote deploy
+	// isDeployRemote represents whether the process is coming from a remote deploy
 	// if true it should get the local deployer
 	isDeployRemote := utils.LoadBoolean(constants.OKtetoDeployRemote)
 
