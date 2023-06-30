@@ -24,11 +24,13 @@ import (
 func GetAvailablePort(iface string) (int, error) {
 	address, err := net.ResolveTCPAddr("tcp", net.JoinHostPort(iface, strconv.Itoa(0)))
 	if err != nil {
+		oktetoLog.Println("1")
 		return 0, err
 	}
 
 	listener, err := net.ListenTCP("tcp", address)
 	if err != nil {
+		oktetoLog.Println("2")
 		return 0, err
 	}
 
