@@ -62,7 +62,7 @@ func (k *KubeConfig) Modify(port int, sessionToken, destKubeconfigFile string) e
 	clusterInfo := proxyCfg.Clusters[proxyCfg.Contexts[proxyCfg.CurrentContext].Cluster]
 
 	// Change server to our proxy
-	clusterInfo.Server = fmt.Sprintf("https://127.0.0.1:%d", port)
+	clusterInfo.Server = fmt.Sprintf("https://localhost:%d", port)
 	// Set the certificate authority to talk with the proxy
 	if clusterInfo.CertificateAuthority != "" {
 		clusterInfo.CertificateAuthority = ""
