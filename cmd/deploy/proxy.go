@@ -73,7 +73,7 @@ type proxyHandler struct {
 // NewProxy creates a new proxy
 func NewProxy(kubeconfig *KubeConfig) (*Proxy, error) {
 	// Look for a free local port to start the proxy
-	port, err := model.GetAvailablePort("0.0.0.0")
+	port, err := model.GetAvailablePort("localhost")
 	if err != nil {
 		oktetoLog.Errorf("could not find a free port to start proxy server: %s", err)
 		return nil, err
