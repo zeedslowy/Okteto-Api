@@ -30,7 +30,6 @@ func GetAvailablePort(iface string) (int, error) {
 
 	listener, err := net.ListenTCP("tcp", address)
 	if err != nil {
-		oktetoLog.Println("2")
 		return 0, err
 	}
 
