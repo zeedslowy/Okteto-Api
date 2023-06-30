@@ -19,9 +19,7 @@ import (
 	"encoding/binary"
 	"fmt"
 	"math/rand"
-	"net"
 	"os"
-	"strconv"
 	"strings"
 	"time"
 	"unicode"
@@ -152,13 +150,7 @@ func main() {
 	root.AddCommand(cmd.Push(ctx))
 	root.AddCommand(pipeline.Pipeline(ctx))
 
-	address, err := net.ResolveTCPAddr("tcp", net.JoinHostPort("localhost", strconv.Itoa(0)))
-	if err != nil {
-		oktetoLog.Println("error here")
-		os.Exit(1)
-	}
-	oktetoLog.Println(address)
-	err = root.Execute()
+	err := root.Execute()
 
 	if err != nil {
 		message := err.Error()
