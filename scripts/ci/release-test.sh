@@ -48,7 +48,7 @@
 
         # BIN_PATH is where the artifacts are stored. Usually precreated by the circleci
         # workflow.
-        BIN_PATH="$PWD/artifacts/bin"
+        BIN_PATH="/home/circleci/project/artifacts/bin"
 
         ################################################################################
         # Sanity check
