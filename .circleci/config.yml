@@ -180,7 +180,6 @@ jobs:
       - checkout
       - attach_workspace:
           at: ./artifacts
-      - run: *init-gcloud
       - run: ./scripts/ci/release-test.sh
 
   run-windows-e2e-test:
@@ -369,14 +368,6 @@ workflows:
             branches:
               only:
                 - adrian/test-release-okteto-bin-for-windows
-      - run-windows-e2e-test:
-          requires:
-            - build-binaries
-          filters:
-            branches:
-              only:
-                - master
-                - /.*(windows|win)/
       - test-integration:
           requires:
             - build-binaries
@@ -385,17 +376,6 @@ workflows:
               only:
                 - master
                 - /.*(e2e)/
-      - test-release:
-          context: GKE
-          requires:
-            - build-binaries
-          filters:
-            tags:
-              ignore: /.*/
-            branches:
-              ignore:
-                - master
-                - *release-branch-regex
       - push-image-latest:
           requires:
             - build-binaries
