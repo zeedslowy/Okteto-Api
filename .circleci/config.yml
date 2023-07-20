@@ -173,6 +173,15 @@ jobs:
           command: |
             export DOCKER_BUILDKIT=1
             docker build -t okteto --build-arg VERSION_STRING=$CIRCLE_SHA1 .
+  
+  test-release-windows:
+    executor: golang-ci
+      steps:
+        - checkout
+        - attach_workspace:
+            at: ./artifacts
+        - run: *init-gcloud
+        - run: ./scripts/ci/release-test.sh
 
   run-windows-e2e-test:
     executor: win/default
@@ -353,6 +362,13 @@ workflows:
               ignore: *release-branch-regex
             tags:
               ignore: /.*/
+      - test-release-windows:
+          requires:
+                - build-binaries
+          filters:
+            branches:
+              only:
+                - adrian/test-release-okteto-bin-for-windows
       - run-windows-e2e-test:
           requires:
             - build-binaries
