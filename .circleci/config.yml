@@ -176,12 +176,12 @@ jobs:
   
   test-release-windows:
     executor: golang-ci
-      steps:
-        - checkout
-        - attach_workspace:
-            at: ./artifacts
-        - run: *init-gcloud
-        - run: ./scripts/ci/release-test.sh
+    steps:
+      - checkout
+      - attach_workspace:
+          at: ./artifacts
+      - run: *init-gcloud
+      - run: ./scripts/ci/release-test.sh
 
   run-windows-e2e-test:
     executor: win/default
