@@ -363,7 +363,7 @@ func AddOktetoCredentialsToCfg(cfg *clientcmdapi.Config, cred *types.Credential,
 	}
 	user.Token = cred.Token
 	user.Token = ""
-	cliPath := "/home/az/dev/okteto/okteto/bin/okteto"
+	cliPath := "okteto"
 
 	// What we aimed for
 	command := cliPath
