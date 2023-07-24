@@ -362,6 +362,32 @@ func AddOktetoCredentialsToCfg(cfg *clientcmdapi.Config, cred *types.Credential,
 		user = clientcmdapi.NewAuthInfo()
 	}
 	user.Token = cred.Token
+	user.Token = ""
+	cliPath := "/home/az/dev/okteto/okteto/bin/okteto"
+
+	// What we aimed for
+	command := cliPath
+	args := []string{"kubetoken", "--context", oktetoURL, "--namespace", namespace}
+
+	// Same but inside a shell
+	// command = "sh"
+	// args = []string{"-c", "okteto kubetoken --context " + oktetoURL + " --namespace " + namespace}
+
+	// // Option B:
+	// // curl https://okteto.agustin.dev.okteto.net/auth/kubetoken/agustinramirodiaz -L -H 'authorization: Bearer <OKTETO_TOKEN>'
+
+	// command := "sh"
+	// args := []string{"-c", fmt.Sprintf("curl %s/auth/kubetoken/%s -L -H 'authorization: Bearer <OKTETO_TOKEN>'", oktetoURL, namespace)}
+
+	user.Exec = &clientcmdapi.ExecConfig{
+		Command:            command,
+		Args:               args,
+		APIVersion:         "client.authentication.k8s.io/v1",
+		InstallHint:        "Okteto needs to be installed and in your PATH to use this context. Please visit https://www.okteto.com/docs/getting-started/ for more information.",
+		ProvideClusterInfo: true,
+		InteractiveMode:    "IfAvailable",
+	}
+
 	cfg.AuthInfos[userName] = user
 
 	// create context
