@@ -63,6 +63,13 @@ You can find more information on 'ExecCredential' and 'client side authenticatio
 			return fmt.Errorf("failed to get the kubetoken: %w", err)
 		}
 
+		// Reproduce okteto ctx selection menu error
+		// cmd.Print(`context defines the default cluster/namespace for any Okteto CLI command.
+		// Select the context you want to use:
+		// Use the arrow keys to navigate: ↓ ↑ → ←
+		//   ▸ https://cloud.okteto.com (Okteto Cloud) *"
+		// `)
+
 		cmd.Print(out)
 		return nil
 	}
