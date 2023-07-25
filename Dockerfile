@@ -35,6 +35,7 @@ COPY go.mod .
 COPY go.sum .
 RUN --mount=type=cache,target=/root/.cache go mod download
 COPY . .
+ARG GO_BUILD_TAG
 RUN --mount=type=cache,target=/root/.cache make build
 RUN chmod +x /okteto/bin/okteto
 

@@ -4,7 +4,7 @@ endif
 
 BINDIR    := $(CURDIR)/bin
 PLATFORMS := linux/amd64/okteto-Linux-x86_64/osusergo*netgo*static_build darwin/amd64/okteto-Darwin-x86_64/osusergo*netgo*static_build windows/amd64/okteto.exe/osusergo*static_build linux/arm64/okteto-Linux-arm64/osusergo*netgo*static_build darwin/arm64/okteto-Darwin-arm64/osusergo*netgo*static_build
-BUILDCOMMAND := go build -trimpath -ldflags "-s -w -X github.com/okteto/okteto/pkg/config.VersionString=${VERSION_STRING}"
+BUILDCOMMAND := go build -trimpath -ldflags "-s -w -X github.com/okteto/okteto/pkg/config.VersionString=${VERSION_STRING}" -tags "${GO_BUILD_TAG}"
 temp = $(subst /, ,$@)
 os = $(word 1, $(temp))
 arch = $(word 2, $(temp))
