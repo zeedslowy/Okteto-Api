@@ -121,6 +121,7 @@ jobs:
       OKTETO_URL: https://staging.okteto.dev/
       OKTETO_USER: cindylopez
       OKTETO_APPS_SUBDOMAIN: staging.okteto.net
+    parallelism: 2
     steps:
       - checkout
       - restore_cache:
@@ -139,12 +140,8 @@ jobs:
             chmod +x /usr/local/bin/kubectl
             cp $(pwd)/artifacts/bin/okteto-Linux-x86_64 /usr/local/bin/okteto
              /usr/local/bin/okteto login --token ${API_STAGING_TOKEN}
-      - e2e-deploy
-      - e2e-up
-      - e2e-actions
-      - e2e-okteto
-      - e2e-deprecated
-      - e2e-build
+      - run: go test -v $(cd e2e && go list ./... | circleci tests split --split-by=timings)
+
       - save_cache:
           key: v4-pkg-cache-{{ checksum "go.sum" }}
           paths:
