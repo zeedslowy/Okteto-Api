@@ -140,7 +140,7 @@ jobs:
             chmod +x /usr/local/bin/kubectl
             cp $(pwd)/artifacts/bin/okteto-Linux-x86_64 /usr/local/bin/okteto
              /usr/local/bin/okteto login --token ${API_STAGING_TOKEN}
-      - run: go test -v $(cd e2e && go list -tags="e2e" ./... | circleci tests split --split-by=timings)
+      - run: go test -v $(cd e2e && go list -tags="e2e" ./... | circleci tests split --split-by=timings) -tags="e2e"
 
       - save_cache:
           key: v4-pkg-cache-{{ checksum "go.sum" }}
