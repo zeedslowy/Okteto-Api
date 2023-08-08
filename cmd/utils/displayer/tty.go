@@ -29,9 +29,6 @@ type ttyDisplayer struct {
 	stderrScanner *bufio.Scanner
 	screenbuf     *screenbuf.ScreenBuf
 
-	commandContext context.Context
-	cancel         context.CancelFunc
-
 	linesToDisplay []string
 }
 
@@ -56,8 +53,7 @@ func newTTYDisplayer(stdout, stderr io.Reader) *ttyDisplayer {
 	}
 }
 
-func (d *ttyDisplayer) Display(_ string) {
-	d.commandContext, d.cancel = context.WithCancel(context.Background())
+func (d *ttyDisplayer) Display(ctx context.Context, _ string) {
 	var wg sync.WaitGroup
 	wgDelta := 0
 	if d.stdoutScanner != nil {
@@ -71,7 +67,7 @@ func (d *ttyDisplayer) Display(_ string) {
 		go func() {
 			for d.stdoutScanner.Scan() {
 				select {
-				case <-d.commandContext.Done():
+				case <-ctx.Done():
 				default:
 					line := d.stdoutScanner.Text()
 					oktetoLog.Println(line)
@@ -90,7 +86,7 @@ func (d *ttyDisplayer) Display(_ string) {
 		go func() {
 			for d.stderrScanner.Scan() {
 				select {
-				case <-d.commandContext.Done():
+				case <-ctx.Done():
 				default:
 					line := d.stderrScanner.Text()
 					oktetoLog.Println(line)
@@ -105,7 +101,8 @@ func (d *ttyDisplayer) Display(_ string) {
 }
 
 // CleanUp stops displaying
-func (d *ttyDisplayer) CleanUp(_ error) {
-	d.cancel()
-	<-d.commandContext.Done()
+func (d *ttyDisplayer) CleanUp(ctx context.Context, _ error) {
+	ctx, cancel := context.WithCancel(ctx)
+	cancel()
+	<-ctx.Done()
 }

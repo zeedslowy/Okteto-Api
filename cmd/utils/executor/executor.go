@@ -14,6 +14,8 @@
 package executor
 
 import (
+	"context"
+	"fmt"
 	"os"
 	"os/exec"
 
@@ -25,8 +27,8 @@ import (
 
 // ManifestExecutor is the interface to execute a command
 type ManifestExecutor interface {
-	Execute(command model.DeployCommand, env []string) error
-	CleanUp(err error)
+	Execute(ctx context.Context, command model.DeployCommand, env []string) error
+	CleanUp(ctx context.Context, err error)
 }
 
 // Executor implements ManifestExecutor with a executor displayer
@@ -38,9 +40,9 @@ type Executor struct {
 }
 
 type executorDisplayer interface {
-	display(command string)
+	display(ctx context.Context, command string)
 	startCommand(cmd *exec.Cmd) error
-	cleanUp(err error)
+	cleanUp(ctx context.Context, err error)
 }
 
 // NewExecutor returns a new executor
@@ -73,7 +75,7 @@ func NewExecutor(output string, runWithoutBash bool, dir string) *Executor {
 }
 
 // Execute executes the specified command adding `env` to the execution environment
-func (e *Executor) Execute(cmdInfo model.DeployCommand, env []string) error {
+func (e *Executor) Execute(ctx context.Context, cmdInfo model.DeployCommand, env []string) error {
 
 	cmd := exec.Command(e.shell, "-c", cmdInfo.Command)
 	if e.runWithoutBash {
@@ -86,21 +88,26 @@ func (e *Executor) Execute(cmdInfo model.DeployCommand, env []string) error {
 	}
 
 	if err := e.displayer.startCommand(cmd); err != nil {
+		if execErr, ok := err.(*exec.Error); ok {
+			if execErr != nil && execErr.Name == e.shell {
+				return fmt.Errorf("%w: \"%s\" is a required dependency for executing the command", err, e.shell)
+			}
+		}
 		return err
 	}
 
-	e.displayer.display(cmdInfo.Name)
+	e.displayer.display(ctx, cmdInfo.Name)
 
 	err := cmd.Wait()
 
-	e.CleanUp(err)
+	e.CleanUp(ctx, err)
 	return err
 }
 
 // CleanUp cleans the execution lines
-func (e *Executor) CleanUp(err error) {
+func (e *Executor) CleanUp(ctx context.Context, err error) {
 	if e.displayer != nil {
-		e.displayer.cleanUp(err)
+		e.displayer.cleanUp(ctx, err)
 	}
 }
 

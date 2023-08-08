@@ -229,7 +229,7 @@ func (fk *fakeProxy) GetToken() string {
 	return fk.token
 }
 
-func (fe *fakeExecutor) Execute(command model.DeployCommand, _ []string) error {
+func (fe *fakeExecutor) Execute(ctx context.Context, command model.DeployCommand, _ []string) error {
 	fe.executed = append(fe.executed, command)
 	if fe.err != nil {
 		return fe.err
@@ -238,7 +238,7 @@ func (fe *fakeExecutor) Execute(command model.DeployCommand, _ []string) error {
 	return nil
 }
 
-func (*fakeExecutor) CleanUp(_ error) {}
+func (*fakeExecutor) CleanUp(_ context.Context, _ error) {}
 
 func TestDeployWithErrorChangingKubeConfig(t *testing.T) {
 	p := &fakeProxy{}

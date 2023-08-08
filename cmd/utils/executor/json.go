@@ -14,6 +14,7 @@
 package executor
 
 import (
+	"context"
 	"os/exec"
 
 	"github.com/okteto/okteto/cmd/utils/displayer"
@@ -42,11 +43,11 @@ func (e *jsonExecutor) startCommand(cmd *exec.Cmd) error {
 	return startCommand(cmd)
 }
 
-func (e *jsonExecutor) display(cmd string) {
-	e.displayer.Display(cmd)
+func (e *jsonExecutor) display(ctx context.Context, cmd string) {
+	e.displayer.Display(ctx, cmd)
 }
-func (e *jsonExecutor) cleanUp(err error) {
+func (e *jsonExecutor) cleanUp(ctx context.Context, err error) {
 	if e.displayer != nil {
-		e.displayer.CleanUp(err)
+		e.displayer.CleanUp(ctx, err)
 	}
 }

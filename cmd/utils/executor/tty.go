@@ -14,6 +14,7 @@
 package executor
 
 import (
+	"context"
 	"os/exec"
 
 	"github.com/okteto/okteto/cmd/utils/displayer"
@@ -28,13 +29,13 @@ func newTTYExecutor() *ttyExecutor {
 	return &ttyExecutor{}
 }
 
-func (e *ttyExecutor) display(command string) {
-	e.displayer.Display(command)
+func (e *ttyExecutor) display(ctx context.Context, cmd string) {
+	e.displayer.Display(ctx, cmd)
 }
 
-func (e *ttyExecutor) cleanUp(err error) {
+func (e *ttyExecutor) cleanUp(ctx context.Context, err error) {
 	if e.displayer != nil {
-		e.displayer.CleanUp(err)
+		e.displayer.CleanUp(ctx, err)
 	}
 }
 

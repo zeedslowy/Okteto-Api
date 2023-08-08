@@ -203,7 +203,7 @@ func (ld *localDeployer) runDeploySection(ctx context.Context, opts *Options) er
 		oktetoLog.SetStage(command.Name)
 		oktetoLog.AddToBuffer(oktetoLog.InfoLevel, "Executing command '%s'...", command.Name)
 
-		if err := ld.Executor.Execute(command, opts.Variables); err != nil {
+		if err := ld.Executor.Execute(ctx, command, opts.Variables); err != nil {
 			oktetoLog.AddToBuffer(oktetoLog.ErrorLevel, "error executing command '%s': %s", command.Name, err.Error())
 			return fmt.Errorf("error executing command '%s': %s", command.Name, err.Error())
 		}
@@ -375,7 +375,7 @@ func (ld *localDeployer) cleanUp(ctx context.Context, err error) {
 		oktetoLog.Infof("could not stop local server: %s", err)
 	}
 	if ld.Executor != nil {
-		ld.Executor.CleanUp(err)
+		ld.Executor.CleanUp(ctx, err)
 	}
 }
 

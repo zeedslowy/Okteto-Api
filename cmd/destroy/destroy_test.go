@@ -95,7 +95,7 @@ func (fd *fakeSecretHandler) List(_ context.Context, _, _ string) ([]v1.Secret, 
 	return fd.secrets, nil
 }
 
-func (fe *fakeExecutor) Execute(command model.DeployCommand, _ []string) error {
+func (fe *fakeExecutor) Execute(ctx context.Context, command model.DeployCommand, _ []string) error {
 	fe.executed = append(fe.executed, command)
 	if fe.err != nil {
 		return fe.err
@@ -104,7 +104,7 @@ func (fe *fakeExecutor) Execute(command model.DeployCommand, _ []string) error {
 	return nil
 }
 
-func (*fakeExecutor) CleanUp(_ error) {}
+func (*fakeExecutor) CleanUp(_ context.Context, _ error) {}
 func getManifestWithError(_ string) (*model.Manifest, error) {
 	return nil, assert.AnError
 }

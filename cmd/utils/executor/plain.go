@@ -14,6 +14,7 @@
 package executor
 
 import (
+	"context"
 	"os/exec"
 
 	"github.com/okteto/okteto/cmd/utils/displayer"
@@ -42,10 +43,10 @@ func (e *plainExecutor) startCommand(cmd *exec.Cmd) error {
 	return startCommand(cmd)
 }
 
-func (e *plainExecutor) display(command string) {
-	e.displayer.Display(command)
+func (e *plainExecutor) display(ctx context.Context, cmd string) {
+	e.displayer.Display(ctx, cmd)
 }
 
-func (e *plainExecutor) cleanUp(err error) {
-	e.displayer.CleanUp(err)
+func (e *plainExecutor) cleanUp(ctx context.Context, err error) {
+	e.displayer.CleanUp(ctx, err)
 }

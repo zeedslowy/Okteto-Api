@@ -14,6 +14,7 @@
 package displayer
 
 import (
+	"context"
 	"io"
 
 	oktetoLog "github.com/okteto/okteto/pkg/log"
@@ -21,8 +22,8 @@ import (
 
 // Displayer displays the commands from another writer to stdout
 type Displayer interface {
-	Display(commandName string)
-	CleanUp(err error)
+	Display(ctx context.Context, commandName string)
+	CleanUp(ctx context.Context, err error)
 }
 
 // NewDisplayer returns a new displayer

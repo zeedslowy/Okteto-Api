@@ -160,7 +160,7 @@ func (ld *localDestroyCommand) runDestroy(ctx context.Context, opts *Options) er
 		for _, command := range ld.manifest.Destroy.Commands {
 			oktetoLog.Information("Running '%s'", command.Name)
 			oktetoLog.SetStage(command.Name)
-			if err := ld.executor.Execute(command, opts.Variables); err != nil {
+			if err := ld.executor.Execute(ctx, command, opts.Variables); err != nil {
 				err = fmt.Errorf("error executing command '%s': %s", command.Name, err.Error())
 				if !opts.ForceDestroy {
 					if err := ld.ConfigMapHandler.setErrorStatus(ctx, cfg, data, err); err != nil {
@@ -181,7 +181,7 @@ func (ld *localDestroyCommand) runDestroy(ctx context.Context, opts *Options) er
 	case <-stop:
 		oktetoLog.Infof("CTRL+C received, starting shutdown sequence")
 		errStop := "interrupt signal received"
-		ld.executor.CleanUp(errors.New(errStop))
+		ld.executor.CleanUp(ctx, errors.New(errStop))
 		if err := ld.ConfigMapHandler.setErrorStatus(ctx, cfg, data, fmt.Errorf(errStop)); err != nil {
 			return err
 		}
@@ -278,7 +278,7 @@ func (dc *localDestroyCommand) destroyHelmReleasesIfPresent(ctx context.Context,
 		cmd := fmt.Sprintf(helmUninstallCommand, releaseName)
 		cmdInfo := model.DeployCommand{Command: cmd, Name: cmd}
 		oktetoLog.Information("Running '%s'", cmdInfo.Name)
-		if err := dc.executor.Execute(cmdInfo, opts.Variables); err != nil {
+		if err := dc.executor.Execute(ctx, cmdInfo, opts.Variables); err != nil {
 			oktetoLog.Infof("could not uninstall helm release '%s': %s", releaseName, err)
 			if !opts.ForceDestroy {
 				return err

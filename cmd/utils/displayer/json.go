@@ -26,9 +26,6 @@ import (
 type jsonDisplayer struct {
 	stdoutScanner *bufio.Scanner
 	stderrScanner *bufio.Scanner
-
-	commandContext context.Context
-	cancel         context.CancelFunc
 }
 
 func newJSONDisplayer(stdout, stderr io.Reader) *jsonDisplayer {
@@ -49,8 +46,7 @@ func newJSONDisplayer(stdout, stderr io.Reader) *jsonDisplayer {
 	}
 }
 
-func (d *jsonDisplayer) Display(_ string) {
-	d.commandContext, d.cancel = context.WithCancel(context.Background())
+func (d *jsonDisplayer) Display(ctx context.Context, _ string) {
 	var wg sync.WaitGroup
 	wgDelta := 0
 	if d.stdoutScanner != nil {
@@ -64,7 +60,7 @@ func (d *jsonDisplayer) Display(_ string) {
 		go func() {
 			for d.stdoutScanner.Scan() {
 				select {
-				case <-d.commandContext.Done():
+				case <-ctx.Done():
 				default:
 					line := d.stdoutScanner.Text()
 					oktetoLog.FPrintln(os.Stdout, line)
@@ -80,7 +76,7 @@ func (d *jsonDisplayer) Display(_ string) {
 		go func() {
 			for d.stderrScanner.Scan() {
 				select {
-				case <-d.commandContext.Done():
+				case <-ctx.Done():
 				default:
 					line := d.stderrScanner.Text()
 					oktetoLog.FPrintln(os.Stdout, line)
@@ -95,7 +91,8 @@ func (d *jsonDisplayer) Display(_ string) {
 }
 
 // CleanUp stops displaying
-func (d *jsonDisplayer) CleanUp(_ error) {
-	d.cancel()
-	<-d.commandContext.Done()
+func (d *jsonDisplayer) CleanUp(ctx context.Context, _ error) {
+	ctx, cancel := context.WithCancel(ctx)
+	cancel()
+	<-ctx.Done()
 }
