@@ -130,11 +130,8 @@ jobs:
       - restore_cache:
           key: v4-pkg-cache-{{ checksum "go.sum" }}
       - run:
-          name: Download gotest.tools/gotestsum
-          command: go install gotest.tools/gotestsum@v1.10.1
-      - run:
           name: Run tests
-          command: go list ./... | circleci tests run --command "xargs gotestsum --junitfile junit.xml --format testname -- -p 4 -race -coverprofile=coverage.txt -covermode=atomic" --split-by=timings --timings-type=name
+          command: go list ./... | circleci tests run --command "xargs go run gotest.tools/gotestsum@v1.10.1 --junitfile junit.xml --format testname -- -p 4 -race -coverprofile=coverage.txt -covermode=atomic" --split-by=timings --timings-type=name
       - run:
           name: Upload coverage to https://codecov.io
           command: bash <(curl -s https://codecov.io/bash)
