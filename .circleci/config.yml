@@ -23,6 +23,15 @@ parameters:
   GHA_Meta:
     type: string
     default: ""
+  run_e2e:
+    type: boolean
+    default: false
+  run_e2e_windows:
+    type: boolean
+    default: false
+  run_e2e_unix:
+    type: boolean
+    default: false
 
 
 orbs:
@@ -541,7 +550,9 @@ workflows:
 
   run-windows-e2e:
     when:
-      equal: ["run-e2e-windows", << pipeline.parameters.GHA_Meta >>]
+      or:
+        - equal: ["run-e2e-windows", << pipeline.parameters.GHA_Meta >>]
+        - equal: [true, << pipeline.parameters.run_e2e_windows >>]
     jobs:
       - build-binaries
       - run-windows-e2e-test:
@@ -549,7 +560,9 @@ workflows:
             - build-binaries
   run-unix-e2e-tests:
     when:
-      equal: ["run-e2e-unix", << pipeline.parameters.GHA_Meta >>]
+      or:
+        - equal: ["run-e2e-unix", << pipeline.parameters.GHA_Meta >>]
+        - equal: [true, << pipeline.parameters.run_e2e_unix >>]
     jobs:
       - build-binaries
       - test-integration:
@@ -558,7 +571,9 @@ workflows:
 
   run-e2e-tests:
     when:
-      equal: ["run-e2e", << pipeline.parameters.GHA_Meta >>]
+      or:
+        - equal: ["run-e2e", << pipeline.parameters.GHA_Meta >>]
+        - equal: [true, << pipeline.parameters.run_e2e >>]
     jobs:
       - build-binaries
       - test-integration:
