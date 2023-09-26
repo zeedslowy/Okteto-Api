@@ -126,6 +126,7 @@ func main() {
 	root.AddCommand(cmd.Kubeconfig())
 	root.AddCommand(kubetoken.KubeToken())
 	root.AddCommand(build.Build(ctx))
+	root.AddCommand(cmd.Validate())
 
 	root.AddCommand(namespace.Namespace(ctx))
 	root.AddCommand(cmd.Init())
