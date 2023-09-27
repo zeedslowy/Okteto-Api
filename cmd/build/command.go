@@ -31,10 +31,12 @@ import (
 	"github.com/okteto/okteto/pkg/discovery"
 	oktetoErrors "github.com/okteto/okteto/pkg/errors"
 	oktetoLog "github.com/okteto/okteto/pkg/log"
+	"github.com/okteto/okteto/pkg/logexperimental"
 	"github.com/okteto/okteto/pkg/model"
 	"github.com/okteto/okteto/pkg/okteto"
 	"github.com/okteto/okteto/pkg/registry"
 	"github.com/okteto/okteto/pkg/types"
+	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 )
 
@@ -44,6 +46,8 @@ type Command struct {
 
 	Builder  build.OktetoBuilderInterface
 	Registry registryInterface
+
+	Logger *logexperimental.Logger
 }
 
 type registryInterface interface {
@@ -64,6 +68,7 @@ func NewBuildCommand() *Command {
 		GetManifest: model.GetManifestV2,
 		Builder:     &build.OktetoBuilder{},
 		Registry:    registry.NewOktetoRegistry(okteto.Config{}),
+		Logger:      logexperimental.NewLogger(logrus.WarnLevel),
 	}
 }
 
@@ -82,6 +87,7 @@ func Build(ctx context.Context) *cobra.Command {
 		RunE: func(cmd *cobra.Command, args []string) error {
 			options.CommandArgs = args
 			bc := NewBuildCommand()
+
 			// The context must be loaded before reading manifest. Otherwise,
 			// secrets will not be resolved when GetManifest is called and
 			// the manifest will load empty values.
@@ -132,7 +138,7 @@ func (bc *Command) getBuilder(options *types.BuildOptions) (Builder, error) {
 			return nil, err
 		}
 
-		oktetoLog.Infof("The manifest %s is not v2 compatible, falling back to building as a v1 manifest: %v", options.File, err)
+		bc.Logger.Infof("The manifest %s is not v2 compatible, falling back to building as a v1 manifest: %v", options.File, err)
 		builder = buildv1.NewBuilder(bc.Builder, bc.Registry)
 	} else {
 		if isBuildV2(manifest) {
