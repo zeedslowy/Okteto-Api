@@ -28,12 +28,13 @@ import (
 	"github.com/okteto/okteto/pkg/devenvironment"
 	oktetoErrors "github.com/okteto/okteto/pkg/errors"
 	"github.com/okteto/okteto/pkg/filesystem"
-	oktetoLog "github.com/okteto/okteto/pkg/log"
+	"github.com/okteto/okteto/pkg/logexperimental"
 	"github.com/okteto/okteto/pkg/model"
 	"github.com/okteto/okteto/pkg/okteto"
 	"github.com/okteto/okteto/pkg/registry"
 	"github.com/okteto/okteto/pkg/repository"
 	"github.com/okteto/okteto/pkg/types"
+	"github.com/sirupsen/logrus"
 )
 
 // OktetoBuilderInterface runs the build of an image
@@ -77,14 +78,16 @@ type OktetoBuilder struct {
 
 	// builtImages represents the images that have been built already
 	builtImages map[string]bool
+
+	logger logexperimental.Logger
 }
 
 // NewBuilder creates a new okteto builder
-func NewBuilder(builder OktetoBuilderInterface, registry oktetoRegistryInterface) *OktetoBuilder {
+func NewBuilder(builder OktetoBuilderInterface, registry oktetoRegistryInterface, logger *logexperimental.Logger) *OktetoBuilder {
 	b := NewBuilderFromScratch()
 	b.Builder = builder
 	b.Registry = registry
-	b.V1Builder = buildv1.NewBuilder(builder, registry)
+	b.V1Builder = buildv1.NewBuilder(builder, registry, logger)
 	return b
 }
 
@@ -92,19 +95,21 @@ func NewBuilder(builder OktetoBuilderInterface, registry oktetoRegistryInterface
 func NewBuilderFromScratch() *OktetoBuilder {
 	builder := &build.OktetoBuilder{}
 	registry := registry.NewOktetoRegistry(okteto.Config{})
+	logger := logexperimental.NewLogger(logrus.WarnLevel)
 	wdCtrl := filesystem.NewOsWorkingDirectoryCtrl()
 	wd, err := wdCtrl.Get()
 	if err != nil {
-		oktetoLog.Infof("could not get working dir: %w", err)
+		logger.Infof("could not get working dir: %w", err)
 	}
 	gitRepo := repository.NewRepository(wd)
 	return &OktetoBuilder{
 		Builder:           builder,
 		Registry:          registry,
-		V1Builder:         buildv1.NewBuilder(builder, registry),
+		V1Builder:         buildv1.NewBuilder(builder, registry, logger),
 		buildEnvironments: map[string]string{},
 		builtImages:       map[string]bool{},
 		Config:            getConfig(registry, gitRepo),
+		logger:            *logger,
 	}
 }
 
@@ -142,7 +147,7 @@ func (bc *OktetoBuilder) Build(ctx context.Context, options *types.BuildOptions)
 	toBuildSvcs := getToBuildSvcs(options.Manifest, options)
 	if err := validateOptions(options.Manifest, toBuildSvcs, options); err != nil {
 		if errors.Is(err, oktetoErrors.ErrNoServicesToBuildDefined) {
-			oktetoLog.Infof("skipping BuildV2 due to not having any svc to build")
+			bc.logger.Infof("skipping BuildV2 due to not having any svc to build")
 			return nil
 		}
 		return err
@@ -150,19 +155,19 @@ func (bc *OktetoBuilder) Build(ctx context.Context, options *types.BuildOptions)
 
 	buildManifest := options.Manifest.Build
 
-	oktetoLog.Infof("Images to build: [%s]", strings.Join(toBuildSvcs, ", "))
+	bc.logger.Infof("Images to build: [%s]", strings.Join(toBuildSvcs, ", "))
 	for len(bc.builtImages) != len(toBuildSvcs) {
 		for _, svcToBuild := range toBuildSvcs {
 			if bc.builtImages[svcToBuild] {
-				oktetoLog.Infof("skipping image '%s' due to being already built")
+				bc.logger.Infof("skipping image '%s' due to being already built")
 				continue
 			}
 			if !bc.areImagesBuilt(buildManifest[svcToBuild].DependsOn) {
-				oktetoLog.Infof("image '%s' can't be deployed because at least one of its dependent images(%s) are not built", svcToBuild, strings.Join(buildManifest[svcToBuild].DependsOn, ", "))
+				bc.logger.Infof("image '%s' can't be deployed because at least one of its dependent images(%s) are not built", svcToBuild, strings.Join(buildManifest[svcToBuild].DependsOn, ", "))
 				continue
 			}
 			if options.EnableStages {
-				oktetoLog.SetStage(fmt.Sprintf("Building service %s", svcToBuild))
+				bc.logger.SetStage(fmt.Sprintf("Building service %s", svcToBuild))
 			}
 
 			buildSvcInfo := buildManifest[svcToBuild]
@@ -171,11 +176,11 @@ func (bc *OktetoBuilder) Build(ctx context.Context, options *types.BuildOptions)
 			if !options.NoCache && bc.Config.IsCleanProject() {
 				imageChecker := getImageChecker(buildSvcInfo, bc.Config, bc.Registry)
 				if imageWithDigest, isBuilt := imageChecker.checkIfCommitHashIsBuilt(options.Manifest.Name, svcToBuild, buildSvcInfo); isBuilt {
-					oktetoLog.Information("Skipping build of '%s' image because it's already built for commit %s", svcToBuild, bc.Config.GetGitCommit())
+					bc.logger.Information("Skipping build of '%s' image because it's already built for commit %s", svcToBuild, bc.Config.GetGitCommit())
 					// if the built image belongs to global registry we clone it to the dev registry
 					// so that in can be used in dev containers (i.e. okteto up)
 					if bc.Registry.IsGlobalRegistry(imageWithDigest) {
-						oktetoLog.Debugf("Copying image '%s' from global to personal registry", svcToBuild)
+						bc.logger.Debugf("Copying image '%s' from global to personal registry", svcToBuild)
 						tag := bc.Config.GetBuildHash(buildSvcInfo)
 						devImage, err := bc.Registry.CloneGlobalImageToDev(imageWithDigest, tag)
 						if err != nil {
@@ -203,7 +208,7 @@ func (bc *OktetoBuilder) Build(ctx context.Context, options *types.BuildOptions)
 		}
 	}
 	if options.EnableStages {
-		oktetoLog.SetStage("")
+		bc.logger.SetStage("")
 	}
 	return options.Manifest.ExpandEnvVars()
 }
@@ -241,13 +246,13 @@ func (bc *OktetoBuilder) buildService(ctx context.Context, manifest *model.Manif
 		}
 
 	default:
-		oktetoLog.Infof("could not build service %s, due to not having Dockerfile defined or volumes to include", svcName)
+		bc.logger.Infof("could not build service %s, due to not having Dockerfile defined or volumes to include", svcName)
 	}
 	return "", nil
 }
 
 func (bc *OktetoBuilder) buildSvcFromDockerfile(ctx context.Context, manifest *model.Manifest, svcName string, options *types.BuildOptions) (string, error) {
-	oktetoLog.Infof("Building image for service '%s'", svcName)
+	bc.logger.Infof("Building image for service '%s'", svcName)
 	isStackManifest := manifest.Type == model.StackType
 	buildSvcInfo := bc.getBuildInfoWithoutVolumeMounts(manifest.Build[svcName], isStackManifest)
 
@@ -275,7 +280,7 @@ func (bc *OktetoBuilder) buildSvcFromDockerfile(ctx context.Context, manifest *m
 }
 
 func (bc *OktetoBuilder) addVolumeMounts(ctx context.Context, manifest *model.Manifest, svcName string, options *types.BuildOptions) (string, error) {
-	oktetoLog.Information("Including volume hosts for service '%s'", svcName)
+	bc.logger.Information("Including volume hosts for service '%s'", svcName)
 	isStackManifest := (manifest.Type == model.StackType) || (manifest.Deploy != nil && manifest.Deploy.ComposeSection != nil)
 	fromImage := manifest.Build[svcName].Image
 	if options.Tag != "" {

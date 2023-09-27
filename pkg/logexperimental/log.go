@@ -77,20 +77,22 @@ type Logger struct {
 	spinner *spinnerLogger
 }
 
-// Init configures the logger for the package to use.
+// Init configures the Logger for the package to use.
 func NewLogger(level logrus.Level) *Logger {
 	log := &Logger{
 		out: logrus.New(),
 	}
 	log.out.SetOutput(os.Stdout)
 	log.out.SetLevel(level)
-	log.writer = log.getWriter(TTYFormat)
-	log.maskedWords = []string{}
-	log.buf = &bytes.Buffer{}
-	log.spinner = &spinnerLogger{
+	spinner := &spinnerLogger{
 		sp:             newSpinner(log.writer),
 		spinnerSupport: !log.loadBool(OktetoDisableSpinnerEnvVar) && log.IsInteractive(),
+		writer:         log.writer,
 	}
+	log.writer = log.getWriter(TTYFormat, spinner)
+	log.maskedWords = []string{}
+	log.buf = &bytes.Buffer{}
+	log.spinner = spinner
 
 	return log
 }
@@ -105,97 +107,97 @@ func getRollingLog(path string) io.Writer {
 	}
 }
 
-// SetLevel sets the level of the main logger
-func (log *logger) SetLevel(level string) {
+// SetLevel sets the level of the main Logger
+func (log *Logger) SetLevel(level string) {
 	l, err := logrus.ParseLevel(level)
 	if err == nil {
 		log.out.SetLevel(l)
 	}
 }
 
-// GetLevel gets the level of the main logger
-func (log *logger) GetLevel() string {
+// GetLevel gets the level of the main Logger
+func (log *Logger) GetLevel() string {
 	l := log.out.Level
 	return l.String()
 }
 
 // GetOutputFormat returns the output format of the command
-func (log *logger) GetOutputFormat() string {
+func (log *Logger) GetOutputFormat() string {
 	return log.outputMode
 }
 
 // GetOutput returns the log output
-func (log *logger) GetOutput() io.Writer {
+func (log *Logger) GetOutput() io.Writer {
 	return log.out.Out
 }
 
 // SetOutput sets the log output
-func (log *logger) SetOutput(output io.Writer) {
+func (log *Logger) SetOutput(output io.Writer) {
 	log.out.SetOutput(output)
 }
 
 // SetOutputFormat sets the output format
-func (log *logger) SetOutputFormat(format string) {
-	log.writer = log.getWriter(format)
+func (log *Logger) SetOutputFormat(format string) {
+	log.writer = log.getWriter(format, log.spinner)
 }
 
 // GetOutputWriter sets the output format
-func (log *logger) GetOutputWriter() OktetoWriter {
+func (log *Logger) GetOutputWriter() OktetoWriter {
 	return log.writer
 }
 
-// SetStage sets the stage of the logger
-func (log *logger) SetStage(stage string) {
+// SetStage sets the stage of the Logger
+func (log *Logger) SetStage(stage string) {
 	log.writer.SetStage(stage)
 }
 
-// IsDebug checks if the level of the main logger is DEBUG or TRACE
-func (log *logger) IsDebug() bool {
+// IsDebug checks if the level of the main Logger is DEBUG or TRACE
+func (log *Logger) IsDebug() bool {
 	return log.out.GetLevel() >= logrus.DebugLevel
 }
 
 // Debug writes a debug-level log
-func (log *logger) Debug(args ...interface{}) {
+func (log *Logger) Debug(args ...interface{}) {
 	log.writer.Debug(args...)
 }
 
 // Debugf writes a debug-level log with a format
-func (log *logger) Debugf(format string, args ...interface{}) {
+func (log *Logger) Debugf(format string, args ...interface{}) {
 	log.writer.Debugf(format, args...)
 }
 
 // Info writes a info-level log
-func (log *logger) Info(args ...interface{}) {
+func (log *Logger) Info(args ...interface{}) {
 	log.writer.Info(args...)
 }
 
 // Infof writes a info-level log with a format
-func (log *logger) Infof(format string, args ...interface{}) {
+func (log *Logger) Infof(format string, args ...interface{}) {
 	log.writer.Infof(format, args...)
 }
 
 // Error writes a error-level log
-func (log *logger) Error(args ...interface{}) {
+func (log *Logger) Error(args ...interface{}) {
 	log.writer.Error(args...)
 }
 
 // Errorf writes a error-level log with a format
-func (log *logger) Errorf(format string, args ...interface{}) {
+func (log *Logger) Errorf(format string, args ...interface{}) {
 	log.writer.Errorf(format, args...)
 }
 
 // Fatalf writes a error-level log with a format
-func (log *logger) Fatalf(format string, args ...interface{}) {
+func (log *Logger) Fatalf(format string, args ...interface{}) {
 	log.writer.Fatalf(format, args...)
 }
 
 // Yellow writes a line in yellow
-func (log *logger) Yellow(format string, args ...interface{}) {
+func (log *Logger) Yellow(format string, args ...interface{}) {
 	log.writer.Yellow(format, args...)
 }
 
 // Green writes a line in green
-func (log *logger) Green(format string, args ...interface{}) {
+func (log *Logger) Green(format string, args ...interface{}) {
 	log.writer.Green(format, args...)
 }
 
@@ -215,84 +217,84 @@ func BlueBackgroundString(format string, args ...interface{}) string {
 }
 
 // Success prints a message with the success symbol first, and the text in green
-func (log *logger) Success(format string, args ...interface{}) {
+func (log *Logger) Success(format string, args ...interface{}) {
 	log.writer.Success(format, args...)
 }
 
 // Information prints a message with the information symbol first, and the text in blue
-func (log *logger) Information(format string, args ...interface{}) {
+func (log *Logger) Information(format string, args ...interface{}) {
 	log.writer.Information(format, args...)
 }
 
 // Question prints a message with the question symbol first, and the text in magenta
-func (log *logger) Question(format string, args ...interface{}) error {
+func (log *Logger) Question(format string, args ...interface{}) error {
 	return log.writer.Question(format, args...)
 }
 
 // Warning prints a message with the warning symbol first, and the text in yellow
-func (log *logger) Warning(format string, args ...interface{}) {
+func (log *Logger) Warning(format string, args ...interface{}) {
 	log.writer.Warning(format, args...)
 }
 
 // FWarning prints a message with the warning symbol first, and the text in yellow to a specific writer
-func (log *logger) FWarning(w io.Writer, format string, args ...interface{}) {
+func (log *Logger) FWarning(w io.Writer, format string, args ...interface{}) {
 	log.writer.FWarning(w, format, args...)
 }
 
 // Hint prints a message with the text in blue
-func (log *logger) Hint(format string, args ...interface{}) {
+func (log *Logger) Hint(format string, args ...interface{}) {
 	log.writer.Hint(format, args...)
 }
 
 // Fail prints a message with the error symbol first, and the text in red
-func (log *logger) Fail(format string, args ...interface{}) {
+func (log *Logger) Fail(format string, args ...interface{}) {
 	msg := fmt.Sprintf(format, args...)
 	msg = log.redactMessage(msg)
 	log.writer.Fail(msg)
 }
 
 // Println writes a line with colors
-func (log *logger) Println(args ...interface{}) {
+func (log *Logger) Println(args ...interface{}) {
 	msg := fmt.Sprint(args...)
 	msg = log.redactMessage(msg)
 	log.writer.Println(msg)
 }
 
 // FPrintln writes a line with colors to specific writer
-func (log *logger) FPrintln(w io.Writer, args ...interface{}) {
+func (log *Logger) FPrintln(w io.Writer, args ...interface{}) {
 	msg := fmt.Sprint(args...)
 	msg = log.redactMessage(msg)
 	log.writer.FPrintln(w, msg)
 }
 
 // Print writes a line with colors
-func (log *logger) Print(args ...interface{}) {
+func (log *Logger) Print(args ...interface{}) {
 	msg := fmt.Sprint(args...)
 	msg = log.redactMessage(msg)
 	log.writer.Print(msg)
 }
 
 // Printf writes a line with format
-func (log *logger) Printf(format string, args ...interface{}) {
+func (log *Logger) Printf(format string, args ...interface{}) {
 	msg := fmt.Sprintf(format, args...)
 	msg = log.redactMessage(msg)
 	log.writer.Print(msg)
 }
 
 // IsInteractive checks if the writer is interactive
-func (log *logger) IsInteractive() bool {
+func (log *Logger) IsInteractive() bool {
 	return log.writer.IsInteractive()
 }
 
 // AddMaskedWord adds a new word to be redacted
-func (log *logger) AddMaskedWord(word string) {
+func (log *Logger) AddMaskedWord(word string) {
 	if strings.TrimSpace(word) != "" {
 		log.maskedWords = append(log.maskedWords, word)
 	}
 }
 
 // EnableMasking starts redacting all variables
-func (log *logger) EnableMasking() {
+func (log *Logger) EnableMasking() {
 	log.isMasked = true
 	sort.Slice(log.maskedWords, func(i, j int) bool {
 		return len(log.maskedWords[i]) > len(log.maskedWords[j])
@@ -306,11 +308,11 @@ func (log *logger) EnableMasking() {
 }
 
 // DisableMasking will stop showing secrets and vars
-func (log *logger) DisableMasking() {
+func (log *Logger) DisableMasking() {
 	log.isMasked = false
 }
 
-func (log *logger) redactMessage(message string) string {
+func (log *Logger) redactMessage(message string) string {
 	if log.isMasked {
 		return log.replacer.Replace(message)
 	}
@@ -318,16 +320,16 @@ func (log *logger) redactMessage(message string) string {
 }
 
 // GetOutputBuffer returns the buffer of the running command
-func (log *logger) GetOutputBuffer() *bytes.Buffer {
+func (log *Logger) GetOutputBuffer() *bytes.Buffer {
 	return log.buf
 }
 
 // AddToBuffer logs into the buffer but does not print anything
-func (log *logger) AddToBuffer(level, format string, args ...interface{}) {
+func (log *Logger) AddToBuffer(level, format string, args ...interface{}) {
 	log.writer.AddToBuffer(level, format, args...)
 }
 
-func (log *logger) loadBool(env string) bool {
+func (log *Logger) loadBool(env string) bool {
 	value := os.Getenv(env)
 	if value == "" {
 		value = "false"

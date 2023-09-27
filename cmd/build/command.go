@@ -30,7 +30,6 @@ import (
 	"github.com/okteto/okteto/pkg/cmd/build"
 	"github.com/okteto/okteto/pkg/discovery"
 	oktetoErrors "github.com/okteto/okteto/pkg/errors"
-	oktetoLog "github.com/okteto/okteto/pkg/log"
 	"github.com/okteto/okteto/pkg/logexperimental"
 	"github.com/okteto/okteto/pkg/model"
 	"github.com/okteto/okteto/pkg/okteto"
@@ -120,7 +119,7 @@ func Build(ctx context.Context) *cobra.Command {
 	cmd.Flags().BoolVarP(&options.NoCache, "no-cache", "", false, "do not use cache when building the image")
 	cmd.Flags().StringArrayVar(&options.CacheFrom, "cache-from", nil, "cache source images")
 	cmd.Flags().StringArrayVar(&options.ExportCache, "export-cache", nil, "export cache images")
-	cmd.Flags().StringVarP(&options.OutputMode, "progress", "", oktetoLog.TTYFormat, "show plain/tty build output")
+	cmd.Flags().StringVarP(&options.OutputMode, "progress", "", logexperimental.TTYFormat, "show plain/tty build output")
 	cmd.Flags().StringArrayVar(&options.BuildArgs, "build-arg", nil, "set build-time variables")
 	cmd.Flags().StringArrayVar(&options.Secrets, "secret", nil, "secret files exposed to the build. Format: id=mysecret,src=/local/secret")
 	cmd.Flags().StringVar(&options.Platform, "platform", "", "set platform if server is multi-platform capable")
@@ -139,12 +138,12 @@ func (bc *Command) getBuilder(options *types.BuildOptions) (Builder, error) {
 		}
 
 		bc.Logger.Infof("The manifest %s is not v2 compatible, falling back to building as a v1 manifest: %v", options.File, err)
-		builder = buildv1.NewBuilder(bc.Builder, bc.Registry)
+		builder = buildv1.NewBuilder(bc.Builder, bc.Registry, bc.Logger)
 	} else {
 		if isBuildV2(manifest) {
-			builder = buildv2.NewBuilder(bc.Builder, bc.Registry)
+			builder = buildv2.NewBuilder(bc.Builder, bc.Registry, bc.Logger)
 		} else {
-			builder = buildv1.NewBuilder(bc.Builder, bc.Registry)
+			builder = buildv1.NewBuilder(bc.Builder, bc.Registry, bc.Logger)
 		}
 	}
 

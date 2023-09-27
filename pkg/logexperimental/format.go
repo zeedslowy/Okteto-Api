@@ -63,7 +63,7 @@ const (
 	SilentFormat string = "silent"
 )
 
-func (l *Logger) getWriter(format string) OktetoWriter {
+func (l *Logger) getWriter(format string, spinner *spinnerLogger) OktetoWriter {
 	switch format {
 	case TTYFormat:
 		l.outputMode = TTYFormat

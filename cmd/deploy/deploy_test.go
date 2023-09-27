@@ -24,7 +24,9 @@ import (
 	"github.com/okteto/okteto/pkg/analytics"
 	"github.com/okteto/okteto/pkg/divert"
 	oktetoErrors "github.com/okteto/okteto/pkg/errors"
+	"github.com/okteto/okteto/pkg/logexperimental"
 	"github.com/okteto/okteto/pkg/registry"
+	"github.com/sirupsen/logrus"
 
 	buildv2 "github.com/okteto/okteto/cmd/build/v2"
 	pipelineCMD "github.com/okteto/okteto/cmd/pipeline"
@@ -373,6 +375,7 @@ func TestCreateConfigMapWithBuildError(t *testing.T) {
 
 	registry := newFakeRegistry()
 	builder := test.NewFakeOktetoBuilder(registry)
+	logger := logexperimental.NewLogger(logrus.WarnLevel)
 	c := &DeployCommand{
 		GetManifest: getErrorManifest,
 		GetDeployer: func(ctx context.Context, manifest *model.Manifest, opts *Options, _ *buildv2.OktetoBuilder, _ configMapHandler) (deployerInterface, error) {
@@ -384,7 +387,7 @@ func TestCreateConfigMapWithBuildError(t *testing.T) {
 				Fs:                afero.NewMemMapFs(),
 			}, nil
 		},
-		Builder:           buildv2.NewBuilder(builder, registry),
+		Builder:           buildv2.NewBuilder(builder, registry, logger),
 		K8sClientProvider: clientProvider,
 		CfgMapHandler:     newDefaultConfigMapHandler(clientProvider),
 	}
