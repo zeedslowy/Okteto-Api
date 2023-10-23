@@ -35,7 +35,6 @@ linters:
   enable:
     - errcheck
     - gosimple
-    - typecheck
     - govet
     - ineffassign
     - unused
