@@ -123,9 +123,9 @@ type ManifestDependencies map[string]*Dependency
 // NewManifest creates a new empty manifest
 func NewManifest() *Manifest {
 	return &Manifest{
-		Dev:           map[string]*Dev{},
-		Build:         map[string]*BuildInfo{},
-		Dependencies:  map[string]*Dependency{},
+		Dev:           ManifestDevs{},
+		Build:         ManifestBuild{},
+		Dependencies:  ManifestDependencies{},
 		Deploy:        &DeployInfo{},
 		GlobalForward: []forward.GlobalForward{},
 		External:      externalresource.ExternalResourceSection{},

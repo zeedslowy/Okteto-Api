@@ -1083,7 +1083,7 @@ deploy:
   - okteto stack deploy`),
 			expected: &Manifest{
 				Namespace: "test",
-				Build:     map[string]*BuildInfo{},
+				Build:     ManifestBuild{},
 				Deploy: &DeployInfo{
 					Commands: []DeployCommand{
 						{
@@ -1093,7 +1093,7 @@ deploy:
 					},
 				},
 				Destroy:      &DestroyInfo{},
-				Dev:          map[string]*Dev{},
+				Dev:          ManifestDevs{},
 				Dependencies: map[string]*Dependency{},
 				External:     externalresource.ExternalResourceSection{},
 				Context:      "context-to-use",
@@ -1118,7 +1118,7 @@ dev:
 			expected: &Manifest{
 				IsV2:  true,
 				Type:  OktetoManifestType,
-				Build: map[string]*BuildInfo{},
+				Build: ManifestBuild{},
 				Deploy: &DeployInfo{
 					Commands: []DeployCommand{
 						{
@@ -1130,7 +1130,7 @@ dev:
 				Destroy:      &DestroyInfo{},
 				Dependencies: map[string]*Dependency{},
 				External:     externalresource.ExternalResourceSection{},
-				Dev: map[string]*Dev{
+				Dev: ManifestDevs{
 					"test-1": {
 						Mode: constants.OktetoSyncModeFieldValue,
 						Name: "test-1",
@@ -1275,13 +1275,13 @@ sync:
   - app:/app`),
 			expected: &Manifest{
 				Type:          OktetoManifestType,
-				Build:         map[string]*BuildInfo{},
+				Build:         ManifestBuild{},
 				Deploy:        &DeployInfo{},
 				Destroy:       &DestroyInfo{},
 				Dependencies:  map[string]*Dependency{},
 				External:      externalresource.ExternalResourceSection{},
 				GlobalForward: []forward.GlobalForward{},
-				Dev: map[string]*Dev{
+				Dev: ManifestDevs{
 					"test": {
 						Name: "test",
 						Sync: Sync{
@@ -1361,13 +1361,13 @@ services:
   - name: svc`),
 			expected: &Manifest{
 				Type:          OktetoManifestType,
-				Build:         map[string]*BuildInfo{},
+				Build:         ManifestBuild{},
 				Deploy:        &DeployInfo{},
 				Destroy:       &DestroyInfo{},
 				Dependencies:  map[string]*Dependency{},
 				GlobalForward: []forward.GlobalForward{},
 				External:      externalresource.ExternalResourceSection{},
-				Dev: map[string]*Dev{
+				Dev: ManifestDevs{
 					"test": {
 						Name: "test",
 						Sync: Sync{
@@ -1497,11 +1497,11 @@ dev:
 			expected: &Manifest{
 				Type:         OktetoManifestType,
 				IsV2:         true,
-				Build:        map[string]*BuildInfo{},
+				Build:        ManifestBuild{},
 				Dependencies: map[string]*Dependency{},
 				External:     externalresource.ExternalResourceSection{},
 				Destroy:      &DestroyInfo{},
-				Dev: map[string]*Dev{
+				Dev: ManifestDevs{
 					"test": {
 						Name: "test",
 						Sync: Sync{
@@ -1586,11 +1586,11 @@ dev:
 			expected: &Manifest{
 				Type:         OktetoManifestType,
 				IsV2:         true,
-				Build:        map[string]*BuildInfo{},
+				Build:        ManifestBuild{},
 				Dependencies: map[string]*Dependency{},
 				External:     externalresource.ExternalResourceSection{},
 				Destroy:      &DestroyInfo{},
-				Dev: map[string]*Dev{
+				Dev: ManifestDevs{
 					"test-1": {
 						Name: "test-1",
 						Sync: Sync{
@@ -1756,8 +1756,8 @@ deploy:
 			expected: &Manifest{
 				Type:         OktetoManifestType,
 				IsV2:         true,
-				Dev:          map[string]*Dev{},
-				Build:        map[string]*BuildInfo{},
+				Dev:          ManifestDevs{},
+				Build:        ManifestBuild{},
 				Dependencies: map[string]*Dependency{},
 				External:     externalresource.ExternalResourceSection{},
 				Destroy:      &DestroyInfo{},
@@ -1784,8 +1784,8 @@ devs:
 			expected: &Manifest{
 				Type:         OktetoManifestType,
 				IsV2:         true,
-				Dev:          map[string]*Dev{},
-				Build:        map[string]*BuildInfo{},
+				Dev:          ManifestDevs{},
+				Build:        ManifestBuild{},
 				Dependencies: map[string]*Dependency{},
 				External:     externalresource.ExternalResourceSection{},
 				Destroy:      &DestroyInfo{},
