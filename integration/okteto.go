@@ -85,7 +85,7 @@ func GetTestNamespace(prefix, user string) string {
 	if os == "windows" {
 		os = "win"
 	}
-	namespace := fmt.Sprintf("%s-%s-%d-%s", prefix, os, time.Now().Unix(), user)
+	namespace := fmt.Sprintf("integration-%s-%s-%d-%s", prefix, os, time.Now().Unix(), user)
 	return strings.ToLower(namespace)
 }
 
