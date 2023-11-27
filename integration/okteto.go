@@ -80,12 +80,21 @@ func RunOktetoVersion(oktetoPath string) (string, error) {
 }
 
 // GetTestNamespace returns the name for a namespace
-func GetTestNamespace(prefix, user string) string {
-	os := runtime.GOOS
-	if os == "windows" {
-		os = "win"
+func GetTestNamespace(name, user string) string {
+	osName := runtime.GOOS
+	if osName == "windows" {
+		osName = "win"
 	}
-	namespace := fmt.Sprintf("integration-%s-%s-%d-%s", prefix, os, time.Now().Unix(), user)
+
+	ts := time.Now().Format("20060102150405")
+	nsNameSegments := []string{name, osName, ts, user}
+
+	if prefix := os.Getenv("OKTETO_INTEGRATION_TESTS_NS_PREFIX"); prefix != "" {
+		nsNameSegments = append([]string{prefix}, nsNameSegments...)
+	}
+
+	namespace := strings.Join(nsNameSegments, "-")
+
 	return strings.ToLower(namespace)
 }
 
