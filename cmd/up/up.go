@@ -227,7 +227,6 @@ func Up(at analyticsTrackerInterface, ioCtrl *io.IOController) *cobra.Command {
 						Context:          upOptions.K8sContext,
 						ShowCTA:          false,
 						Workdir:          wd,
-						AutoDeploy:       true,
 						AutoConfigureDev: true,
 					})
 					if err != nil {
