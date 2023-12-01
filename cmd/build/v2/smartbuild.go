@@ -21,75 +21,86 @@ import (
 	"strings"
 
 	"github.com/okteto/okteto/pkg/env"
-	oktetoLog "github.com/okteto/okteto/pkg/log"
 	"github.com/okteto/okteto/pkg/model"
 )
 
 const (
 	// OktetoSmartBuildUsingContextEnvVar is the env var to enable smart builds using the build context instead of the project build
 	OktetoSmartBuildUsingContextEnvVar = "OKTETO_SMART_BUILDS_USING_BUILD_CONTEXT"
-
-	buildContextCommitType = "tree_hash"
-	projectCommitType      = "commit"
 )
+
+type smartBuildController interface {
+	repositoryCommitRetriever
+	gitStatusController
+}
 
 type repositoryCommitRetriever interface {
 	GetSHA() (string, error)
-	GetTreeHash(string) (string, error)
+	GetLatestPathCommit(string) (string, error)
 }
 
-type serviceHasher struct {
-	gitRepoCtrl repositoryCommitRetriever
+type gitStatusController interface {
+	GetDiff(string) (string, error)
+	IsClean(string) (bool, error)
+}
+
+type smartBuildControl struct {
+	repositoryCommitRetriever repositoryCommitRetriever
+	gitStatusController       gitStatusController
 
 	buildContextCache map[string]string
 	projectCommit     string
+
+	logger loggerInfo
 }
 
-func newServiceHasher(gitRepoCtrl repositoryCommitRetriever) *serviceHasher {
-	return &serviceHasher{
-		gitRepoCtrl:       gitRepoCtrl,
-		buildContextCache: map[string]string{},
+func newSmartBuildControl(gitRepoCtrl smartBuildController, logger loggerInfo) *smartBuildControl {
+
+	return &smartBuildControl{
+		repositoryCommitRetriever: gitRepoCtrl,
+		gitStatusController:       gitRepoCtrl,
+		buildContextCache:         map[string]string{},
 	}
 }
 
 // hashProjectCommit returns the hash of the repository's commit
-func (sh *serviceHasher) hashProjectCommit(buildInfo *model.BuildInfo) string {
+func (sh *smartBuildControl) hashProjectCommit(buildInfo *model.BuildInfo) string {
 	if sh.projectCommit == "" {
 		var err error
-		sh.projectCommit, err = sh.gitRepoCtrl.GetSHA()
+		sh.projectCommit, err = sh.repositoryCommitRetriever.GetSHA()
 		if err != nil {
-			oktetoLog.Infof("could not get repository sha: %w", err)
+			sh.logger.Infof("could not get repository sha: %w", err)
 		}
 	}
-	return sh.hash(buildInfo, projectCommitType, sh.projectCommit)
+	return sh.hash(buildInfo, sh.projectCommit)
 }
 
 // hashBuildContext returns the hash of the service using its context tree hash
-func (sh serviceHasher) hashBuildContext(buildInfo *model.BuildInfo) string {
+func (sh smartBuildControl) hashBuildContext(buildInfo *model.BuildInfo) string {
 	buildContext := buildInfo.Context
 	if buildContext == "" {
 		buildContext = "."
 	}
 	if _, ok := sh.buildContextCache[buildInfo.Context]; !ok {
 		var err error
-		sh.buildContextCache[buildContext], err = sh.gitRepoCtrl.GetTreeHash(buildContext)
+		sh.buildContextCache[buildContext], err = sh.repositoryCommitRetriever.GetLatestPathCommit(buildContext)
 		if err != nil {
-			oktetoLog.Info("error trying to get tree hash for build context '%s': %w", buildContext, err)
+			sh.logger.Infof("error trying to get tree hash for build context '%s': %w", buildContext, err)
 		}
 	}
 
-	return sh.hash(buildInfo, buildContextCommitType, sh.buildContextCache[buildContext])
+	return sh.hash(buildInfo, sh.buildContextCache[buildContext])
 }
 
 // hashService returns the hashed project commit by default. If smart-builds use the context it returns the hash of the service given its git tree hash
-func (sh serviceHasher) hashService(buildInfo *model.BuildInfo) string {
+func (sh smartBuildControl) hashService(buildInfo *model.BuildInfo) string {
 	if env.LoadBoolean(OktetoSmartBuildUsingContextEnvVar) {
 		return sh.hashBuildContext(buildInfo)
 	}
 	return sh.hashProjectCommit(buildInfo)
 }
 
-func (sh serviceHasher) hash(buildInfo *model.BuildInfo, commitType, commitHash string) string {
+func (sh smartBuildControl) hash(buildInfo *model.BuildInfo, commitHash string) string {
 	args := []string{}
 	for _, arg := range buildInfo.Args {
 		args = append(args, arg.String())
@@ -102,25 +113,28 @@ func (sh serviceHasher) hash(buildInfo *model.BuildInfo, commitType, commitHash 
 	}
 	secretsText := strings.Join(secrets, ";")
 
+	gitDiff, err := sh.gitStatusController.GetDiff(buildInfo.Context)
+	if err != nil {
+		sh.logger.Infof("could not get git diff: %w", err)
+	}
 	// We use a builder to avoid allocations when building the string
 	var b strings.Builder
 
-	fmt.Fprintf(&b, "%s:%s;", commitType, commitHash)
+	fmt.Fprintf(&b, "commit:%s;", commitHash)
 	fmt.Fprintf(&b, "target:%s;", buildInfo.Target)
 	fmt.Fprintf(&b, "build_args:%s;", argsText)
 	fmt.Fprintf(&b, "secrets:%s;", secretsText)
 	fmt.Fprintf(&b, "context:%s;", buildInfo.Context)
 	fmt.Fprintf(&b, "dockerfile:%s;", buildInfo.Dockerfile)
-	if commitType == buildContextCommitType {
-		fmt.Fprintf(&b, "dockerfile_content:%s;", getDockerfileContent(buildInfo.Dockerfile))
-	}
+	fmt.Fprintf(&b, "dockerfile_content:%s;", sh.getDockerfileContent(buildInfo.Dockerfile))
+	fmt.Fprintf(&b, "git_diff:%s;", gitDiff)
 	fmt.Fprintf(&b, "image:%s;", buildInfo.Image)
 
 	oktetoBuildHash := sha256.Sum256([]byte(b.String()))
 	return hex.EncodeToString(oktetoBuildHash[:])
 }
 
-func (sh serviceHasher) GetCommitHash(buildInfo *model.BuildInfo) string {
+func (sh smartBuildControl) GetCommitHash(buildInfo *model.BuildInfo) string {
 	if env.LoadBoolean(OktetoSmartBuildUsingContextEnvVar) {
 		buildContext := buildInfo.Context
 		if buildContext == "" {
@@ -129,19 +143,20 @@ func (sh serviceHasher) GetCommitHash(buildInfo *model.BuildInfo) string {
 		if commit, ok := sh.buildContextCache[buildContext]; ok {
 			return commit
 		}
-		oktetoLog.Infof("could not find commit for build context '%s'", buildContext)
+		sh.logger.Infof("could not find commit for build context '%s'", buildContext)
 		return ""
 	}
 	return sh.projectCommit
 }
 
 // getDockerfileContent returns the content of the Dockerfile
-func getDockerfileContent(dockerfilePath string) string {
+func (sh smartBuildControl) getDockerfileContent(dockerfilePath string) string {
 	content, err := os.ReadFile(dockerfilePath)
 	if err != nil {
-		oktetoLog.Info("error trying to read Dockerfile: %w", err)
+		sh.logger.Infof("error trying to read Dockerfile: %w", err)
 		return ""
 	}
+
 	encodedFile := sha256.Sum256(content)
 	return hex.EncodeToString(encodedFile[:])
 }

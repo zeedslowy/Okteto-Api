@@ -36,7 +36,7 @@ type Repository struct {
 type repositoryInterface interface {
 	isClean(ctx context.Context) (bool, error)
 	getSHA() (string, error)
-	getTreeSHA(string) (string, error)
+	getLatestPathCommit(string) (string, error)
 }
 
 type repositoryURL struct {
@@ -115,6 +115,10 @@ func (r Repository) GetAnonymizedRepo() string {
 	return r.url.String()
 }
 
-func (r Repository) GetTreeHash(buildContext string) (string, error) {
-	return r.control.getTreeSHA(buildContext)
+func (r Repository) GetLatestPathCommit(buildContext string) (string, error) {
+	return r.control.getBuildContextCommit(buildContext)
+}
+
+func (r Repository) GetDiff(bui string) (string, error) {
+	return r.control.getDiff(commit)
 }

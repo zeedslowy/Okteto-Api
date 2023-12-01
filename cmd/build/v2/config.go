@@ -31,7 +31,6 @@ type configRepositoryInterface interface {
 	GetSHA() (string, error)
 	IsClean() (bool, error)
 	GetAnonymizedRepo() string
-	GetTreeHash(string) (string, error)
 }
 
 type configRegistryInterface interface {

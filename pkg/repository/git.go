@@ -122,7 +122,7 @@ func (r gitRepoController) getSHA() (string, error) {
 	return head.Hash().String(), nil
 }
 
-func (r gitRepoController) getTreeSHA(context string) (string, error) {
+func (r gitRepoController) getLatestPathCommit(context string) (string, error) {
 	repo, err := r.repoGetter.get(r.path)
 	if err != nil {
 		return "", fmt.Errorf("failed to get repository: %w", err)
@@ -161,7 +161,6 @@ func (r gitRepoController) getTreeSHA(context string) (string, error) {
 }
 
 func getTreeDirFromRelPath(relPath string) (string, error) {
-
 	wdCtrl := filesystem.NewOsWorkingDirectoryCtrl()
 	wd, err := wdCtrl.Get()
 	if err != nil {

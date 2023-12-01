@@ -59,7 +59,6 @@ type oktetoRegistryInterface interface {
 // oktetoBuilderConfigInterface returns the configuration that the builder has for the registry and project
 type oktetoBuilderConfigInterface interface {
 	HasGlobalAccess() bool
-	IsCleanProject() bool
 	GetGitCommit() string
 	IsOkteto() bool
 	GetAnonymizedRepo() string
@@ -78,7 +77,7 @@ type OktetoBuilder struct {
 	analyticsTracker analyticsTrackerInterface
 	V1Builder        *buildv1.OktetoBuilder
 
-	hasher *serviceHasher
+	gitRepoCtrl *smartBuildControl
 
 	// buildEnvironments are the environment variables created by the build steps
 	buildEnvironments map[string]string
@@ -121,7 +120,7 @@ func NewBuilderFromScratch(analyticsTracker analyticsTrackerInterface, ioCtrl *i
 		Config:            config,
 		analyticsTracker:  analyticsTracker,
 		ioCtrl:            ioCtrl,
-		hasher:            newServiceHasher(gitRepo),
+		gitRepoCtrl:       newSmartBuildControl(gitRepo, ioCtrl.Logger()),
 	}
 }
 
@@ -207,26 +206,26 @@ func (bc *OktetoBuilder) Build(ctx context.Context, options *types.BuildOptions)
 
 			repoHashDurationStart := time.Now()
 
-			meta.RepoHash = bc.hasher.hashProjectCommit(buildSvcInfo)
+			meta.RepoHash = bc.gitRepoCtrl.hashProjectCommit(buildSvcInfo)
 			meta.RepoHashDuration = time.Since(repoHashDurationStart)
 
 			buildContextHashDurationStart := time.Now()
-			meta.BuildContextHash = bc.hasher.hashBuildContext(buildSvcInfo)
+			meta.BuildContextHash = bc.gitRepoCtrl.hashBuildContext(buildSvcInfo)
 			meta.BuildContextHashDuration = time.Since(buildContextHashDurationStart)
 
-			// We only check that the image is built in the global registry if the noCache option is not set
-			if !options.NoCache && bc.Config.IsCleanProject() && bc.Config.IsSmartBuildsEnabled() {
+			if !options.NoCache && bc.Config.IsSmartBuildsEnabled() && bc.gitRepoCtrl.IsClean(buildSvcInfo) {
 
+				buildHash := bc.gitRepoCtrl.hashService(buildSvcInfo)
 				imageChecker := getImageChecker(buildSvcInfo, bc.Config, bc.Registry, bc.ioCtrl.Logger())
 				cacheHitDurationStart := time.Now()
-				buildHash := bc.hasher.hashService(buildSvcInfo)
+
 				imageWithDigest, isBuilt := imageChecker.checkIfBuildHashIsBuilt(options.Manifest.Name, svcToBuild, buildHash)
 
 				meta.CacheHit = isBuilt
 				meta.CacheHitDuration = time.Since(cacheHitDurationStart)
 
 				if isBuilt {
-					bc.ioCtrl.Out().Infof("Skipping build of '%s' image because it's already built for commit %s", svcToBuild, bc.hasher.GetCommitHash(buildSvcInfo))
+					bc.ioCtrl.Out().Infof("Skipping build of '%s' image because it's already built for commit %s", svcToBuild, bc.gitRepoCtrl.GetCommitHash(buildSvcInfo))
 					// if the built image belongs to global registry we clone it to the dev registry
 					// so that in can be used in dev containers (i.e. okteto up)
 					if bc.Registry.IsGlobalRegistry(imageWithDigest) {
