@@ -16,6 +16,7 @@ package destroy
 import (
 	"context"
 	"fmt"
+	"path/filepath"
 	"regexp"
 	"strings"
 
@@ -31,9 +32,9 @@ type buildCtrl struct {
 	name    string
 }
 
-func newBuildCtrl(name string, analyticsTracker analyticsTrackerInterface, ioCtrl *io.IOController) buildCtrl {
+func newBuildCtrl(name string, analyticsTracker analyticsTrackerInterface, ioCtrl *io.IOController, executor buildv2.CommandExecutor) buildCtrl {
 	return buildCtrl{
-		builder: buildv2.NewBuilderFromScratch(analyticsTracker, ioCtrl),
+		builder: buildv2.NewBuilderFromScratch(analyticsTracker, ioCtrl, executor),
 		name:    name,
 	}
 }
@@ -76,9 +77,10 @@ func (bc buildCtrl) buildImageIfNecessary(ctx context.Context, manifest *model.M
 			return nil
 		}
 		buildOptions := &types.BuildOptions{
-			EnableStages: true,
-			Manifest:     manifest,
-			CommandArgs:  svcsToBuild,
+			EnableStages:        true,
+			Manifest:            manifest,
+			CommandArgs:         svcsToBuild,
+			PreBuildHookCommand: filepath.Join(".okteto", "pre-build.sh"),
 		}
 
 		if errBuild := bc.builder.Build(ctx, buildOptions); errBuild != nil {

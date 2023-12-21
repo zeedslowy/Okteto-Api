@@ -66,12 +66,17 @@ type analyticsTrackerInterface interface {
 	TrackImageBuild(meta ...*analytics.ImageBuildMetadata)
 }
 
+type CommandExecutor interface {
+	Execute(cmdInfo model.DeployCommand, env []string) error
+}
+
 // Stack is the executor of stack commands
 type Stack struct {
 	K8sClient        kubernetes.Interface
 	Config           *rest.Config
 	AnalyticsTracker analyticsTrackerInterface
 	IoCtrl           *io.IOController
+	CmdExecutor      CommandExecutor
 }
 
 const (
@@ -86,7 +91,7 @@ func (sd *Stack) Deploy(ctx context.Context, s *model.Stack, options *StackDeplo
 	}
 
 	if !options.InsidePipeline {
-		if err := buildStackImages(ctx, s, options, sd.AnalyticsTracker, sd.IoCtrl); err != nil {
+		if err := buildStackImages(ctx, s, options, sd.AnalyticsTracker, sd.IoCtrl, sd.CmdExecutor); err != nil {
 			return err
 		}
 	}

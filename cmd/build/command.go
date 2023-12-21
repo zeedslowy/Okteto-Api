@@ -19,6 +19,8 @@ import (
 	"errors"
 	"fmt"
 	"os"
+	"path"
+	"path/filepath"
 
 	"github.com/moby/buildkit/frontend/dockerfile/instructions"
 	"github.com/moby/buildkit/frontend/dockerfile/parser"
@@ -27,15 +29,19 @@ import (
 	contextCMD "github.com/okteto/okteto/cmd/context"
 	"github.com/okteto/okteto/cmd/namespace"
 	"github.com/okteto/okteto/cmd/utils"
+	"github.com/okteto/okteto/cmd/utils/executor"
 	"github.com/okteto/okteto/pkg/analytics"
 	buildCmd "github.com/okteto/okteto/pkg/cmd/build"
 	"github.com/okteto/okteto/pkg/discovery"
 	oktetoErrors "github.com/okteto/okteto/pkg/errors"
+	"github.com/okteto/okteto/pkg/filesystem"
+	oktetoLog "github.com/okteto/okteto/pkg/log"
 	"github.com/okteto/okteto/pkg/log/io"
 	"github.com/okteto/okteto/pkg/model"
 	"github.com/okteto/okteto/pkg/okteto"
 	"github.com/okteto/okteto/pkg/registry"
 	"github.com/okteto/okteto/pkg/types"
+	"github.com/spf13/afero"
 	"github.com/spf13/cobra"
 )
 
@@ -161,7 +167,23 @@ func (bc *Command) getBuilder(options *types.BuildOptions, okCtx *okteto.OktetoC
 		builder = buildv1.NewBuilder(bc.Builder, bc.Registry, bc.ioCtrl)
 	} else {
 		if isBuildV2(manifest) {
-			builder = buildv2.NewBuilder(bc.Builder, bc.Registry, bc.ioCtrl, bc.analyticsTracker, okCtx)
+			// TODO: Review path here
+			// As the executor already does sh, we just need to pass the path to the script
+			cmd := filepath.Join(".okteto", "pre-build.sh")
+			if options.File != "" {
+				fmt.Printf("options.File %s", options.File)
+				if err := utils.CheckIfDirectory(options.File); err == nil {
+					cmd = filepath.Join(options.File, ".okteto", "pre-build.sh")
+				} else if filesystem.FileExistsAndNotDir(options.File, afero.NewOsFs()) {
+					fmt.Println("file existas and not dir")
+					cmd = filepath.Join(path.Dir(options.File), ".okteto", "pre-build.sh")
+				} else {
+					cmd = ""
+				}
+			}
+			options.PreBuildHookCommand = cmd
+			cmdExecutor := executor.NewExecutor(oktetoLog.GetOutputFormat(), false, "")
+			builder = buildv2.NewBuilder(bc.Builder, bc.Registry, bc.ioCtrl, bc.analyticsTracker, okCtx, cmdExecutor)
 		} else {
 			builder = buildv1.NewBuilder(bc.Builder, bc.Registry, bc.ioCtrl)
 		}

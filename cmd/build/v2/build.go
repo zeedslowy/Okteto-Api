@@ -73,6 +73,10 @@ type analyticsTrackerInterface interface {
 	TrackImageBuild(meta ...*analytics.ImageBuildMetadata)
 }
 
+type CommandExecutor interface {
+	Execute(cmdInfo model.DeployCommand, env []string) error
+}
+
 // OktetoBuilder builds the images
 type OktetoBuilder struct {
 	Builder          OktetoBuilderInterface
@@ -80,6 +84,7 @@ type OktetoBuilder struct {
 	Config           oktetoBuilderConfigInterface
 	analyticsTracker analyticsTrackerInterface
 	V1Builder        *buildv1.OktetoBuilder
+	Executor         CommandExecutor
 	oktetoContext    build.OktetoContextInterface
 
 	hasher *serviceHasher
@@ -93,7 +98,14 @@ type OktetoBuilder struct {
 }
 
 // NewBuilder creates a new okteto builder
-func NewBuilder(builder OktetoBuilderInterface, registry oktetoRegistryInterface, ioCtrl *io.IOController, analyticsTracker analyticsTrackerInterface, okCtx okteto.OktetoContextInterface) *OktetoBuilder {
+func NewBuilder(
+	builder OktetoBuilderInterface,
+	registry oktetoRegistryInterface,
+	ioCtrl *io.IOController,
+	analyticsTracker analyticsTrackerInterface,
+	okCtx okteto.OktetoContextInterface,
+	executor CommandExecutor,
+) *OktetoBuilder {
 	wdCtrl := filesystem.NewOsWorkingDirectoryCtrl()
 	wd, err := wdCtrl.Get()
 	if err != nil {
@@ -114,11 +126,12 @@ func NewBuilder(builder OktetoBuilderInterface, registry oktetoRegistryInterface
 		ioCtrl:            ioCtrl,
 		hasher:            newServiceHasher(gitRepo),
 		oktetoContext:     okCtx,
+		Executor:          executor,
 	}
 }
 
 // NewBuilderFromScratch creates a new okteto builder
-func NewBuilderFromScratch(analyticsTracker analyticsTrackerInterface, ioCtrl *io.IOController) *OktetoBuilder {
+func NewBuilderFromScratch(analyticsTracker analyticsTrackerInterface, ioCtrl *io.IOController, executor CommandExecutor) *OktetoBuilder {
 	builder := &buildCmd.OktetoBuilder{
 		OktetoContext: &okteto.OktetoContextStateless{
 			Store: okteto.ContextStore(),
@@ -155,12 +168,113 @@ func NewBuilderFromScratch(analyticsTracker analyticsTrackerInterface, ioCtrl *i
 		oktetoContext: &okteto.OktetoContextStateless{
 			Store: okteto.ContextStore(),
 		},
+		Executor: executor,
 	}
 }
 
 // IsV1 returns false since it is a builder v2
 func (*OktetoBuilder) IsV1() bool {
 	return false
+}
+
+type image struct {
+	name                     string
+	cacheHit                 bool
+	cacheHitDuration         time.Duration
+	repoHashDuration         time.Duration
+	imageWithDigest          string
+	repoHash                 string
+	repoURL                  string
+	buildContextHash         string
+	buildContextHashDuration time.Duration
+	buildHash                string
+}
+
+func (ob *OktetoBuilder) precomputeFinalServicesToBuild(toBuildSvcs []string, options *types.BuildOptions) []image {
+	builtImagesControl := make(map[string]bool)
+	buildManifest := options.Manifest.Build
+	services := make([]image, 0)
+	for len(builtImagesControl) != len(toBuildSvcs) {
+		for _, svcToBuild := range toBuildSvcs {
+			if skipServiceBuild(svcToBuild, builtImagesControl) {
+				ob.ioCtrl.Logger().Infof("skipping image '%s' due to being already built", svcToBuild)
+				continue
+			}
+			if !areAllServicesBuilt(buildManifest[svcToBuild].DependsOn, builtImagesControl) {
+				ob.ioCtrl.Logger().Infof("image '%s' can't be deployed because at least one of its dependent images(%s) are not built", svcToBuild, strings.Join(buildManifest[svcToBuild].DependsOn, ", "))
+				continue
+			}
+
+			buildSvcInfo := buildManifest[svcToBuild]
+
+			img := image{
+				name:    svcToBuild,
+				repoURL: ob.Config.GetAnonymizedRepo(),
+			}
+
+			repoHashDurationStart := time.Now()
+
+			img.repoHash = ob.hasher.hashProjectCommit(buildSvcInfo)
+			img.repoHashDuration = time.Since(repoHashDurationStart)
+
+			buildContextHashDurationStart := time.Now()
+			img.buildContextHash = ob.hasher.hashBuildContext(buildSvcInfo)
+			img.buildContextHashDuration = time.Since(buildContextHashDurationStart)
+
+			// We only check that the image is built in the global registry if the noCache option is not set
+			if !options.NoCache && ob.Config.IsCleanProject() && ob.Config.IsSmartBuildsEnabled() {
+
+				imageChecker := getImageChecker(buildSvcInfo, ob.Config, ob.Registry, ob.ioCtrl.Logger())
+				cacheHitDurationStart := time.Now()
+				buildHash := ob.hasher.hashService(buildSvcInfo)
+				imageWithDigest, isBuilt := imageChecker.checkIfBuildHashIsBuilt(options.Manifest.Name, svcToBuild, buildHash)
+
+				img.buildHash = buildHash
+				img.cacheHit = isBuilt
+				img.imageWithDigest = imageWithDigest
+				img.cacheHitDuration = time.Since(cacheHitDurationStart)
+			}
+
+			builtImagesControl[svcToBuild] = true
+			services = append(services, img)
+		}
+	}
+
+	return services
+}
+
+func (ob *OktetoBuilder) isThereAnyServiceToBuild(services []image) bool {
+	for _, svc := range services {
+		if !svc.cacheHit {
+			return true
+		}
+	}
+
+	return false
+}
+
+func (ob *OktetoBuilder) preHook(options *types.BuildOptions) error {
+	if options.EnableStages {
+		ob.ioCtrl.SetStage("Pre build hook")
+	}
+
+	ob.ioCtrl.Out().Infof("Running pre-build hook")
+
+	cmd := model.DeployCommand{
+		Name:    "pre-build",
+		Command: options.PreBuildHookCommand,
+	}
+	err := ob.Executor.Execute(cmd, []string{})
+
+	if options.EnableStages {
+		ob.ioCtrl.SetStage("")
+	}
+
+	if err != nil {
+		return err
+	}
+
+	return nil
 }
 
 // Build builds the images defined by a manifest
@@ -202,10 +316,6 @@ func (ob *OktetoBuilder) Build(ctx context.Context, options *types.BuildOptions)
 
 	buildManifest := options.Manifest.Build
 
-	// builtImagesControl represents the controller for the built services
-	// when a service is built we track it here
-	builtImagesControl := make(map[string]bool)
-
 	// send analytics for all builds after Build
 	buildsAnalytics := make([]*analytics.ImageBuildMetadata, 0)
 
@@ -215,85 +325,73 @@ func (ob *OktetoBuilder) Build(ctx context.Context, options *types.BuildOptions)
 	}(buildsAnalytics)
 
 	ob.ioCtrl.Logger().Infof("Images to build: [%s]", strings.Join(toBuildSvcs, ", "))
-	for len(builtImagesControl) != len(toBuildSvcs) {
-		for _, svcToBuild := range toBuildSvcs {
-			if skipServiceBuild(svcToBuild, builtImagesControl) {
-				ob.ioCtrl.Logger().Infof("skipping image '%s' due to being already built", svcToBuild)
-				continue
-			}
-			if !areAllServicesBuilt(buildManifest[svcToBuild].DependsOn, builtImagesControl) {
-				ob.ioCtrl.Logger().Infof("image '%s' can't be deployed because at least one of its dependent images(%s) are not built", svcToBuild, strings.Join(buildManifest[svcToBuild].DependsOn, ", "))
-				continue
-			}
-			if options.EnableStages {
-				ob.ioCtrl.SetStage(fmt.Sprintf("Building service %s", svcToBuild))
-			}
 
-			buildSvcInfo := buildManifest[svcToBuild]
+	// We precompute the images to be built in order to execute just once
+	// the pre-build hooks if some image has to be built
+	services := ob.precomputeFinalServicesToBuild(toBuildSvcs, options)
 
-			// create the meta pointer and append it to the analytics slice
-			meta := analytics.NewImageBuildMetadata()
-			buildsAnalytics = append(buildsAnalytics, meta)
-
-			meta.Name = svcToBuild
-			meta.RepoURL = ob.Config.GetAnonymizedRepo()
-
-			repoHashDurationStart := time.Now()
-
-			meta.RepoHash = ob.hasher.hashProjectCommit(buildSvcInfo)
-			meta.RepoHashDuration = time.Since(repoHashDurationStart)
-
-			buildContextHashDurationStart := time.Now()
-			meta.BuildContextHash = ob.hasher.hashBuildContext(buildSvcInfo)
-			meta.BuildContextHashDuration = time.Since(buildContextHashDurationStart)
-
-			// We only check that the image is built in the global registry if the noCache option is not set
-			if !options.NoCache && ob.Config.IsCleanProject() && ob.Config.IsSmartBuildsEnabled() {
-
-				imageChecker := getImageChecker(buildSvcInfo, ob.Config, ob.Registry, ob.ioCtrl.Logger())
-				cacheHitDurationStart := time.Now()
-				buildHash := ob.hasher.hashService(buildSvcInfo)
-				imageWithDigest, isBuilt := imageChecker.checkIfBuildHashIsBuilt(options.Manifest.Name, svcToBuild, buildHash)
-
-				meta.CacheHit = isBuilt
-				meta.CacheHitDuration = time.Since(cacheHitDurationStart)
-
-				if isBuilt {
-					ob.ioCtrl.Out().Infof("Skipping build of '%s' image because it's already built for commit %s", svcToBuild, ob.hasher.GetCommitHash(buildSvcInfo))
-					// if the built image belongs to global registry we clone it to the dev registry
-					// so that in can be used in dev containers (i.e. okteto up)
-					if ob.Registry.IsGlobalRegistry(imageWithDigest) {
-						ob.ioCtrl.Logger().Debugf("Copying image '%s' from global to personal registry", svcToBuild)
-						tag := buildHash
-						devImage, err := ob.Registry.CloneGlobalImageToDev(imageWithDigest, tag)
-						if err != nil {
-							return err
-						}
-						imageWithDigest = devImage
-					}
-
-					ob.SetServiceEnvVars(svcToBuild, imageWithDigest)
-					builtImagesControl[svcToBuild] = true
-					meta.Success = true
-					continue
-				}
-			}
-
-			if !ob.oktetoContext.IsOkteto() && buildSvcInfo.Image == "" {
-				return fmt.Errorf("'build.%s.image' is required if your context doesn't have Okteto installed", svcToBuild)
-			}
-			buildDurationStart := time.Now()
-			imageTag, err := ob.buildServiceImages(ctx, options.Manifest, svcToBuild, options)
-			if err != nil {
-				return fmt.Errorf("error building service '%s': %w", svcToBuild, err)
-			}
-			meta.BuildDuration = time.Since(buildDurationStart)
-			meta.Success = true
-
-			ob.SetServiceEnvVars(svcToBuild, imageTag)
-			builtImagesControl[svcToBuild] = true
+	if ob.isThereAnyServiceToBuild(services) && options.PreBuildHookCommand != "" {
+		err := ob.preHook(options)
+		if err != nil {
+			return err
 		}
 	}
+
+	for _, svc := range services {
+		if options.EnableStages {
+			ob.ioCtrl.SetStage(fmt.Sprintf("Building service %s", svc.name))
+		}
+
+		buildSvcInfo := buildManifest[svc.name]
+
+		// create the meta pointer and append it to the analytics slice
+		meta := analytics.NewImageBuildMetadata()
+		buildsAnalytics = append(buildsAnalytics, meta)
+
+		meta.Name = svc.name
+		meta.RepoURL = svc.repoURL
+		meta.RepoHash = svc.repoHash
+		meta.RepoHashDuration = svc.repoHashDuration
+		meta.BuildContextHash = svc.buildContextHash
+		meta.BuildContextHashDuration = svc.buildContextHashDuration
+
+		if svc.cacheHit {
+			meta.CacheHit = svc.cacheHit
+			meta.CacheHitDuration = svc.cacheHitDuration
+
+			imageWithDigest := svc.imageWithDigest
+			ob.ioCtrl.Out().Infof("Skipping build of '%s' image because it's already built for commit %s", svc.name, ob.hasher.GetCommitHash(buildSvcInfo))
+			// if the built image belongs to global registry we clone it to the dev registry
+			// so that in can be used in dev containers (i.e. okteto up)
+			if ob.Registry.IsGlobalRegistry(imageWithDigest) {
+				ob.ioCtrl.Logger().Debugf("Copying image '%s' from global to personal registry", svc.name)
+				tag := svc.buildHash
+				devImage, err := ob.Registry.CloneGlobalImageToDev(imageWithDigest, tag)
+				if err != nil {
+					return err
+				}
+				imageWithDigest = devImage
+			}
+
+			ob.SetServiceEnvVars(svc.name, imageWithDigest)
+			meta.Success = true
+			continue
+		}
+
+		if !ob.oktetoContext.IsOkteto() && buildSvcInfo.Image == "" {
+			return fmt.Errorf("'build.%s.image' is required if your context doesn't have Okteto installed", svc.name)
+		}
+		buildDurationStart := time.Now()
+		imageTag, err := ob.buildServiceImages(ctx, options.Manifest, svc.name, options)
+		if err != nil {
+			return fmt.Errorf("error building service '%s': %w", svc.name, err)
+		}
+		meta.BuildDuration = time.Since(buildDurationStart)
+		meta.Success = true
+
+		ob.SetServiceEnvVars(svc.name, imageTag)
+	}
+
 	if options.EnableStages {
 		ob.ioCtrl.SetStage("")
 	}

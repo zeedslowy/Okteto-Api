@@ -19,6 +19,7 @@ import (
 	"fmt"
 	"os"
 	"os/signal"
+	"path/filepath"
 	"time"
 
 	buildv2 "github.com/okteto/okteto/cmd/build/v2"
@@ -26,6 +27,7 @@ import (
 	"github.com/okteto/okteto/cmd/namespace"
 	pipelineCMD "github.com/okteto/okteto/cmd/pipeline"
 	"github.com/okteto/okteto/cmd/utils"
+	"github.com/okteto/okteto/cmd/utils/executor"
 	"github.com/okteto/okteto/pkg/analytics"
 	"github.com/okteto/okteto/pkg/cmd/pipeline"
 	"github.com/okteto/okteto/pkg/config"
@@ -203,13 +205,15 @@ func Deploy(ctx context.Context, at analyticsTrackerInterface, ioCtrl *io.IOCont
 			if err != nil {
 				return fmt.Errorf("could not create pipeline command: %w", err)
 			}
+
+			cmdExecutor := executor.NewExecutor(oktetoLog.GetOutputFormat(), options.RunWithoutBash, "")
 			c := &DeployCommand{
 				GetManifest: model.GetManifestV2,
 
 				GetExternalControl: NewDeployExternalK8sControl,
 				K8sClientProvider:  k8sClientProvider,
 				GetDeployer:        GetDeployer,
-				Builder:            buildv2.NewBuilderFromScratch(at, ioCtrl),
+				Builder:            buildv2.NewBuilderFromScratch(at, ioCtrl, cmdExecutor),
 				DeployWaiter:       NewDeployWaiter(k8sClientProvider),
 				EndpointGetter:     NewEndpointGetter,
 				isRemote:           env.LoadBoolean(constants.OktetoDeployRemote),
@@ -441,9 +445,10 @@ func buildImages(ctx context.Context, builder builderInterface, deployOptions *O
 
 	if deployOptions.Build {
 		buildOptions := &types.BuildOptions{
-			EnableStages: true,
-			Manifest:     deployOptions.Manifest,
-			CommandArgs:  setToSlice(servicesToBuildSet),
+			EnableStages:        true,
+			Manifest:            deployOptions.Manifest,
+			CommandArgs:         setToSlice(servicesToBuildSet),
+			PreBuildHookCommand: filepath.Join(".okteto", "pre-build.sh"),
 		}
 		oktetoLog.Debug("force build from manifest definition")
 		if errBuild := builder.Build(ctx, buildOptions); errBuild != nil {
@@ -457,9 +462,10 @@ func buildImages(ctx context.Context, builder builderInterface, deployOptions *O
 
 		if len(servicesToBuild) != 0 {
 			buildOptions := &types.BuildOptions{
-				EnableStages: true,
-				Manifest:     deployOptions.Manifest,
-				CommandArgs:  servicesToBuild,
+				EnableStages:        true,
+				Manifest:            deployOptions.Manifest,
+				CommandArgs:         servicesToBuild,
+				PreBuildHookCommand: filepath.Join(".okteto", "pre-build.sh"),
 			}
 
 			if errBuild := builder.Build(ctx, buildOptions); errBuild != nil {

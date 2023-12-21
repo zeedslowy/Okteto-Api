@@ -19,6 +19,7 @@ import (
 	"fmt"
 	"os"
 	"os/signal"
+	"path/filepath"
 
 	buildv1 "github.com/okteto/okteto/cmd/build/v1"
 	contextCMD "github.com/okteto/okteto/cmd/context"
@@ -295,14 +296,15 @@ func buildImage(ctx context.Context, dev *model.Dev, imageFromApp string, pushOp
 
 	buildArgs := model.SerializeBuildArgs(dev.Push.Args)
 	buildOptions := &types.BuildOptions{
-		Path:       dev.Push.Context,
-		File:       dev.Push.Dockerfile,
-		Tag:        buildTag,
-		Target:     dev.Push.Target,
-		NoCache:    pushOpts.NoCache,
-		CacheFrom:  dev.Push.CacheFrom,
-		BuildArgs:  buildArgs,
-		OutputMode: pushOpts.Progress,
+		Path:                dev.Push.Context,
+		File:                dev.Push.Dockerfile,
+		Tag:                 buildTag,
+		Target:              dev.Push.Target,
+		NoCache:             pushOpts.NoCache,
+		CacheFrom:           dev.Push.CacheFrom,
+		BuildArgs:           buildArgs,
+		OutputMode:          pushOpts.Progress,
+		PreBuildHookCommand: filepath.Join(".okteto", "pre-build.sh"),
 	}
 	if err := buildv1.NewBuilderFromScratch(io.NewIOController()).Build(ctx, buildOptions); err != nil {
 		return "", err

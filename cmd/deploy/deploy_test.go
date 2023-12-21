@@ -441,10 +441,11 @@ func TestCreateConfigMapWithBuildError(t *testing.T) {
 			CurrentContext: "test",
 		},
 	}
+	cmdExecutor := &fakeExecutor{}
 	c := &DeployCommand{
 		GetManifest:       getErrorManifest,
 		GetDeployer:       fakeDeployer.Get,
-		Builder:           buildv2.NewBuilder(builder, reg, io.NewIOController(), fakeTracker, okCtx),
+		Builder:           buildv2.NewBuilder(builder, reg, io.NewIOController(), fakeTracker, okCtx, cmdExecutor),
 		K8sClientProvider: fakeK8sClientProvider,
 		CfgMapHandler:     newDefaultConfigMapHandler(fakeK8sClientProvider),
 		Fs:                afero.NewMemMapFs(),

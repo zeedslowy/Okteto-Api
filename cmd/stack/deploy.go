@@ -23,6 +23,7 @@ import (
 	contextCMD "github.com/okteto/okteto/cmd/context"
 	"github.com/okteto/okteto/cmd/namespace"
 	"github.com/okteto/okteto/cmd/utils"
+	"github.com/okteto/okteto/cmd/utils/executor"
 	"github.com/okteto/okteto/pkg/analytics"
 	"github.com/okteto/okteto/pkg/cmd/stack"
 	"github.com/okteto/okteto/pkg/constants"
@@ -121,11 +122,14 @@ func (c *DeployCommand) RunDeploy(ctx context.Context, s *model.Stack, options *
 		options.ServicesToDeploy = definedServices
 	}
 
+	cmdExecutor := executor.NewExecutor(oktetoLog.GetOutputFormat(), false, "")
+
 	stackDeployer := &stack.Stack{
 		K8sClient:        c.K8sClient,
 		Config:           c.Config,
 		AnalyticsTracker: c.analyticsTracker,
 		IoCtrl:           c.ioCtrl,
+		CmdExecutor:      cmdExecutor,
 	}
 	err := stackDeployer.Deploy(ctx, s, options)
 

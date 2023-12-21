@@ -187,7 +187,8 @@ func (fakeAnalyticsTracker) TrackImageBuild(...*analytics.ImageBuildMetadata) {}
 func (fakeAnalyticsTracker) TrackDestroy(analytics.DestroyMetadata)           {}
 
 func Test_newBuildCtrl(t *testing.T) {
-	got := newBuildCtrl("test-control", &fakeAnalyticsTracker{}, io.NewIOController())
+	cmdExecutor := &fakeExecutor{}
+	got := newBuildCtrl("test-control", &fakeAnalyticsTracker{}, io.NewIOController(), cmdExecutor)
 
 	require.Equal(t, "test-control", got.name)
 	require.IsType(t, got.builder, &v2.OktetoBuilder{})

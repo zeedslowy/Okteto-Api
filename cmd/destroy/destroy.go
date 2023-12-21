@@ -182,14 +182,16 @@ func Destroy(ctx context.Context, at analyticsTrackerInterface, ioCtrl *io.IOCon
 					return err
 				}
 			}
+			cmdExecutor := executor.NewExecutor(oktetoLog.GetOutputFormat(), options.RunWithoutBash, "")
+
 			c := &destroyCommand{
-				executor:          executor.NewExecutor(oktetoLog.GetOutputFormat(), options.RunWithoutBash, ""),
+				executor:          cmdExecutor,
 				ConfigMapHandler:  NewConfigmapHandler(k8sClient),
 				nsDestroyer:       namespaces.NewNamespace(dynClient, discClient, cfg, k8sClient),
 				secrets:           secrets.NewSecrets(k8sClient),
 				k8sClientProvider: okteto.NewK8sClientProvider(),
 				oktetoClient:      okClient,
-				buildCtrl:         newBuildCtrl(options.Name, at, ioCtrl),
+				buildCtrl:         newBuildCtrl(options.Name, at, ioCtrl, cmdExecutor),
 				analyticsTracker:  at,
 				getManifest:       model.GetManifestV2,
 				ioCtrl:            ioCtrl,

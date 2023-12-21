@@ -35,6 +35,7 @@ import (
 	"github.com/okteto/okteto/cmd/namespace"
 	pipelineCMD "github.com/okteto/okteto/cmd/pipeline"
 	"github.com/okteto/okteto/cmd/utils"
+	"github.com/okteto/okteto/cmd/utils/executor"
 	"github.com/okteto/okteto/pkg/analytics"
 	"github.com/okteto/okteto/pkg/cmd/pipeline"
 	"github.com/okteto/okteto/pkg/config"
@@ -251,6 +252,7 @@ func Up(at analyticsTrackerInterface, ioCtrl *io.IOController) *cobra.Command {
 				}
 			}
 
+			cmdExecutor := executor.NewExecutor(oktetoLog.GetOutputFormat(), false, "")
 			up := &upContext{
 				Manifest:          oktetoManifest,
 				Dev:               nil,
@@ -264,7 +266,7 @@ func Up(at analyticsTrackerInterface, ioCtrl *io.IOController) *cobra.Command {
 				analyticsMeta:     upMeta,
 				K8sClientProvider: okteto.NewK8sClientProvider(),
 				tokenUpdater:      newTokenUpdaterController(),
-				builder:           buildv2.NewBuilderFromScratch(at, ioCtrl),
+				builder:           buildv2.NewBuilderFromScratch(at, ioCtrl, cmdExecutor),
 			}
 			up.inFd, up.isTerm = term.GetFdInfo(os.Stdin)
 			if up.isTerm {
@@ -858,13 +860,14 @@ func (up *upContext) buildDevImage(ctx context.Context, app apps.App) error {
 	buildArgs := model.SerializeBuildArgs(args)
 
 	buildOptions := &types.BuildOptions{
-		Path:       context,
-		File:       dockerfile,
-		Tag:        imageTag,
-		Target:     target,
-		CacheFrom:  cacheFrom,
-		BuildArgs:  buildArgs,
-		OutputMode: oktetoLog.TTYFormat,
+		Path:                context,
+		File:                dockerfile,
+		Tag:                 imageTag,
+		Target:              target,
+		CacheFrom:           cacheFrom,
+		BuildArgs:           buildArgs,
+		OutputMode:          oktetoLog.TTYFormat,
+		PreBuildHookCommand: filepath.Join(".okteto", "pre-build.sh"),
 	}
 	builder := buildv1.NewBuilderFromScratch(io.NewIOController())
 	if err := builder.Build(ctx, buildOptions); err != nil {
@@ -1074,8 +1077,9 @@ func buildServicesAndSetBuildEnvs(ctx context.Context, m *model.Manifest, builde
 		return nil
 	}
 	buildOptions := &types.BuildOptions{
-		CommandArgs: svcsToBuild,
-		Manifest:    m,
+		CommandArgs:         svcsToBuild,
+		Manifest:            m,
+		PreBuildHookCommand: filepath.Join(".okteto", "pre-build.sh"),
 	}
 	return builder.Build(ctx, buildOptions)
 }

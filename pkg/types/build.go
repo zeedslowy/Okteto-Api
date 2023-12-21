@@ -57,4 +57,8 @@ type BuildOptions struct {
 	BuildToGlobal bool
 	NoCache       bool
 	EnableStages  bool
+
+	// PreBuildHookCommand it contains the command to execute before the of all images. It will be only executed when there is at least
+	// one image to build.
+	PreBuildHookCommand string
 }
